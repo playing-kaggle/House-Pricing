@@ -17,6 +17,15 @@ MSSubClass: Identifies the type of dwelling involved in the sale.	(房型？)
        180	PUD - MULTILEVEL - INCL SPLIT LEV/FOYER
        190	2 FAMILY CONVERSION - ALL STYLES AND AGES
 
+Value         20    30    40    45    50    60    70    75    80    85    90
+Frequency    536    69     4    12   144   299    60    16    58    20    52
+Proportion 0.367 0.047 0.003 0.008 0.099 0.205 0.041 0.011 0.040 0.014 0.036
+                                  
+Value        120   160   180   190
+Frequency     87    63    10    30
+Proportion 0.060 0.043 0.007 0.021
+
+-------------------------------------------------------------------------------------------
 MSZoning: Identifies the general zoning classification of the sale. (所在区域)
 		
        A	Agriculture
@@ -27,43 +36,87 @@ MSZoning: Identifies the general zoning classification of the sale. (所在区�
        RL	Residential Low Density
        RP	Residential Low Density Park 
        RM	Residential Medium Density
-	
+C (all) (10, 0.007), FV (65, 0.045), RH (16, 0.011), RL (1151, 0.788), RM
+(218, 0.149)
+-------------------------------------------------------------------------------------------
 LotFrontage: Linear feet of street connected to property (毗邻面的距离)
+numeric
+n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1201      259      110    0.998    70.05    24.61       34       44 
+     .25      .50      .75      .90      .95 
+      59       69       80       96      107 
 
+-------------------------------------------------------------------------------------------
 LotArea: Lot size in square feet (每单元用地面积)
+numeric
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0     1073        1    10517     5718     3312     5000 
+     .25      .50      .75      .90      .95 
+    7554     9478    11602    14382    17401 
 
+-------------------------------------------------------------------------------------------
 Street: Type of road access to property (街道的路)
-
+Binary
        Grvl	Gravel	(石子路)
        Pave	Paved  (铺好的路)
+       n  missing distinct 
+    1460        0        2 
+
+Grvl (6, 0.004), Pave (1454, 0.996)
+-------------------------------------------------------------------------------------------
        	
 Alley: Type of alley access to property (屋前/巷子的路)
 
        Grvl	Gravel
        Pave	Paved
        NA 	No alley access
-		
+
+data[, "Alley"] 
+       n  missing distinct 
+      91     1369        2 
+
+Grvl (50, 0.549), Pave (41, 0.451)
+-------------------------------------------------------------------------------------------
 LotShape: General shape of property (占地形状)
 
        Reg	Regular	
        IR1	Slightly irregular
        IR2	Moderately Irregular
        IR3	Irregular
-       
+data[, "LotShape"] 
+       n  missing distinct 
+    1460        0        4 
+
+IR1 (484, 0.332), IR2 (41, 0.028), IR3 (10, 0.007), Reg (925, 0.634)
+-------------------------------------------------------------------------------------------
 LandContour: Flatness of the property (平整度)
 
        Lvl	Near Flat/Level	
        Bnk	Banked - Quick and significant rise from street grade to building
        HLS	Hillside - Significant slope from side to side
        Low	Depression
-		
+
+       data[, "LandContour"] 
+       n  missing distinct 
+    1460        0        4 
+
+Bnk (63, 0.043), HLS (50, 0.034), Low (36, 0.025), Lvl (1311, 0.898)
+
+
+--------------------------------------------------------------------------------------------		
 Utilities: Type of utilities available  (设施完善度)
 		
        AllPub	All public Utilities (E,G,W,& S)	
        NoSewr	Electricity, Gas, and Water (Septic Tank)
        NoSeWa	Electricity and Gas Only
-       ELO	Electricity only	
-	
+       ELO	Electricity only
+data[, "Utilities"] 
+       n  missing distinct 
+    1460        0        2 
+
+AllPub (1459, 0.999), NoSeWa (1, 0.001)
+
+--------------------------------------------------------------------------------------------
 LotConfig: Lot configuration           ()
 
        Inside	Inside lot
@@ -71,13 +124,24 @@ LotConfig: Lot configuration           ()
        CulDSac	Cul-de-sac
        FR2	Frontage on 2 sides of property
        FR3	Frontage on 3 sides of property
-	
+n  missing distinct 
+    1459        0        5 
+Corner (248, 0.170), CulDSac (82, 0.056), FR2 (38, 0.026), FR3 (10, 0.007),
+Inside (1081, 0.741)
+
+-------------------------------------------------------------------------------------------
 LandSlope: Slope of property   (倾斜度)
 		
        Gtl	Gentle slope
        Mod	Moderate Slope	
        Sev	Severe Slope
-	
+data[, "LandSlope"] 
+       n  missing distinct 
+    1460        0        3 
+
+Gtl (1382, 0.947), Mod (65, 0.045), Sev (13, 0.009)
+
+-------------------------------------------------------------------------------------------
 Neighborhood: Physical locations within Ames city limits 
 
        Blmngtn	Bloomington Heights
@@ -105,7 +169,14 @@ Neighborhood: Physical locations within Ames city limits
        StoneBr	Stone Brook
        Timber	Timberland
        Veenker	Veenker
-			
+
+Blmngtn Blueste  BrDale BrkSide ClearCr CollgCr Crawfor Edwards Gilbert 
+     17       2      16      58      28     150      51     100      79 
+ IDOTRR MeadowV Mitchel   NAmes NoRidge NPkVill NridgHt  NWAmes OldTown 
+     37      17      49     225      41       9      77      73     113 
+ Sawyer SawyerW Somerst StoneBr   SWISU  Timber Veenker 
+     74      59      86      25      25      38      11 
+-------------------------------------------------------------------------------------------			
 Condition1: Proximity to various conditions
 	
        Artery	Adjacent to arterial street
@@ -117,7 +188,15 @@ Condition1: Proximity to various conditions
        PosA	Adjacent to postive off-site feature
        RRNe	Within 200' of East-West Railroad
        RRAe	Adjacent to East-West Railroad
-	
+data[, "Condition1"] 
+       n  missing distinct 
+    1460        0        9 
+                                                                         
+Value      Artery  Feedr   Norm   PosA   PosN   RRAe   RRAn   RRNe   RRNn
+Frequency      48     81   1260      8     19     11     26      2      5
+Proportion  0.033  0.055  0.863  0.005  0.013  0.008  0.018  0.001  0.003
+
+-------------------------------------------------------------------------------------------
 Condition2: Proximity to various conditions (if more than one is present)
 		
        Artery	Adjacent to arterial street
@@ -129,7 +208,17 @@ Condition2: Proximity to various conditions (if more than one is present)
        PosA	Adjacent to postive off-site feature
        RRNe	Within 200' of East-West Railroad
        RRAe	Adjacent to East-West Railroad
-	
+data[, "Condition2"] 
+       n  missing distinct 
+    1460        0        8 
+
+lowest : Artery Feedr  Norm   PosA   PosN  
+highest: PosA   PosN   RRAe   RRAn   RRNn   
+
+Artery (2, 0.001), Feedr (6, 0.004), Norm (1445, 0.990), PosA (1, 0.001),
+PosN (2, 0.001), RRAe (1, 0.001), RRAn (1, 0.001), RRNn (2, 0.001)
+
+-----------------------------------------------------------------------------------------
 BldgType: Type of dwelling  (居住类型)
 		
        1Fam	Single-family Detached	
@@ -137,6 +226,13 @@ BldgType: Type of dwelling  (居住类型)
        Duplx	Duplex
        TwnhsE	Townhouse End Unit
        TwnhsI	Townhouse Inside Unit
+data[, "BldgType"] 
+       n  missing distinct 
+    1460        0        5 
+
+1Fam (1220, 0.836), 2fmCon (31, 0.021), Duplex (52, 0.036), Twnhs (43,
+0.029), TwnhsE (114, 0.078)
+-----------------------------------------------------------------------------------------
 	
 HouseStyle: Style of dwelling      (房屋户型)
 	
@@ -148,7 +244,17 @@ HouseStyle: Style of dwelling      (房屋户型)
        2.5Unf	Two and one-half story: 2nd level unfinished
        SFoyer	Split Foyer
        SLvl	Split Level
-	
+data[, "HouseStyle"] 
+       n  missing distinct 
+    1460        0        8 
+
+lowest : 1.5Fin 1.5Unf 1Story 2.5Fin 2.5Unf
+highest: 2.5Fin 2.5Unf 2Story SFoyer SLvl   
+                                                                  
+Value      1.5Fin 1.5Unf 1Story 2.5Fin 2.5Unf 2Story SFoyer   SLvl
+Frequency     154     14    726      8     11    445     37     65
+Proportion  0.105  0.010  0.497  0.005  0.008  0.305  0.025  0.045
+----------------------------------------------------------------------------------------
 OverallQual: Rates the overall material and finish of the house (房屋总体材质和完工质量)
 
        10	Very Excellent
@@ -161,6 +267,10 @@ OverallQual: Rates the overall material and finish of the house (房屋总体材
        3	Fair
        2	Poor
        1	Very Poor
+1 (2, 0.001), 2 (3, 0.002), 3 (20, 0.014), 4 (116, 0.079), 5 (397, 0.272), 6
+(374, 0.256), 7 (319, 0.218), 8 (168, 0.115), 9 (43, 0.029), 10 (18, 0.012)
+
+---------------------------------------------------------------------------------------
 	
 OverallCond: Rates the overall condition of the house (房屋状况)
 
@@ -174,11 +284,30 @@ OverallCond: Rates the overall condition of the house (房屋状况)
        3	Fair
        2	Poor
        1	Very Poor
-		
+1 (1, 0.001), 2 (5, 0.003), 3 (25, 0.017), 4 (57, 0.039), 5 (821, 0.562), 6
+(252, 0.173), 7 (205, 0.140), 8 (72, 0.049), 9 (22, 0.015)
+
+---------------------------------------------------------------------------------------
 YearBuilt: Original construction date (初始建造时间)
+建议转换成距今时间
+data[, "YearBuilt"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      112        1     1971    33.88     1916     1925 
+     .25      .50      .75      .90      .95 
+    1954     1973     2000     2006     2007 
 
+lowest : 1872 1875 1880 1882 1885, highest: 2006 2007 2008 2009 2010 
+---------------------------------------------------------------------------------------
 YearRemodAdd: Remodel date (same as construction date if no remodeling or additions) (整修时间,如果没有整修过就是初始建造时间)
+同上
+data[, "YearRemodAdd"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       61    0.997     1985    23.05     1950     1950 
+     .25      .50      .75      .90      .95 
+    1967     1994     2004     2006     2007 
 
+lowest : 1950 1951 1952 1953 1954, highest: 2006 2007 2008 2009 2010 
+-------------------------------------------------------------------------------------
 RoofStyle: Type of roof (屋顶风格)
 
        Flat	Flat
@@ -187,7 +316,16 @@ RoofStyle: Type of roof (屋顶风格)
        Hip	Hip
        Mansard	Mansard
        Shed	Shed
-		
+data[, "RoofStyle"] 
+       n  missing distinct 
+    1460        0        6 
+
+lowest : Flat    Gable   Gambrel Hip     Mansard
+highest: Gable   Gambrel Hip     Mansard Shed    
+
+Flat (13, 0.009), Gable (1141, 0.782), Gambrel (11, 0.008), Hip (286,
+0.196), Mansard (7, 0.005), Shed (2, 0.001)
+-------------------------------------------------------------------------------------
 RoofMatl: Roof material (屋顶材料)
 
        ClyTile	Clay or Tile
@@ -198,7 +336,14 @@ RoofMatl: Roof material (屋顶材料)
        Tar&Grv	Gravel & Tar
        WdShake	Wood Shakes
        WdShngl	Wood Shingles
-		
+data[, "RoofMatl"] 
+       n  missing distinct 
+    1460        0        8 
+
+Value      ClyTile CompShg Membran   Metal    Roll Tar&Grv WdShake WdShngl
+Frequency        1    1434       1       1       1      11       5       6
+Proportion   0.001   0.982   0.001   0.001   0.001   0.008   0.003   0.004
+------------------------------------------------------------------------------------
 Exterior1st: Exterior covering on house (外墙材料)
 
        AsbShng	Asbestos Shingles
@@ -218,7 +363,19 @@ Exterior1st: Exterior covering on house (外墙材料)
        VinylSd	Vinyl Siding
        Wd Sdng	Wood Siding
        WdShing	Wood Shingles
-	
+data[, "Exterior1st"] 
+       n  missing distinct 
+    1460        0       15 
+
+Value      AsbShng AsphShn BrkComm BrkFace  CBlock CemntBd HdBoard ImStucc
+Frequency       20       1       2      50       1      61     222       1
+Proportion   0.014   0.001   0.001   0.034   0.001   0.042   0.152   0.001
+                                                                  
+Value      MetalSd Plywood   Stone  Stucco VinylSd Wd Sdng WdShing
+Frequency      220     108       2      25     515     206      26
+Proportion   0.151   0.074   0.001   0.017   0.353   0.141   0.018
+
+------------------------------------------------------------------------------------
 Exterior2nd: Exterior covering on house (if more than one material)
 
        AsbShng	Asbestos Shingles
@@ -238,7 +395,17 @@ Exterior2nd: Exterior covering on house (if more than one material)
        VinylSd	Vinyl Siding
        Wd Sdng	Wood Siding
        WdShing	Wood Shingles
-	
+data[, "Exterior2nd"] 
+       n  missing distinct 
+    1460        0       16 
+Value      AsbShng AsphShn Brk Cmn BrkFace  CBlock CmentBd HdBoard ImStucc
+Frequency       20       3       7      25       1      60     207      10
+Proportion   0.014   0.002   0.005   0.017   0.001   0.041   0.142   0.007
+                                                                          
+Value      MetalSd   Other Plywood   Stone  Stucco VinylSd Wd Sdng Wd Shng
+Frequency      214       1     142       5      26     504     197      38
+Proportion   0.147   0.001   0.097   0.003   0.018   0.345   0.135   0.026
+-----------------------------------------------------------------------------------
 MasVnrType: Masonry veneer type (砖石装饰类型)
 
        BrkCmn	Brick Common
@@ -246,9 +413,22 @@ MasVnrType: Masonry veneer type (砖石装饰类型)
        CBlock	Cinder Block
        None	None
        Stone	Stone
-	
-MasVnrArea: Masonry veneer area in square feet  (砖石装饰面积)
 
+data[, "MasVnrType"] 
+       n  missing distinct 
+    1452        8        4 
+
+BrkCmn (15, 0.010), BrkFace (445, 0.306), None (864, 0.595), Stone (128,
+0.088)
+
+----------------------------------------------------------------------------------
+MasVnrArea: Masonry veneer area in square feet  (砖石装饰面积)
+data[, "MasVnrArea"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1452        8      327    0.791    103.7    156.9        0        0 
+     .25      .50      .75      .90      .95 
+       0        0      166      335      456 
+---------------------------------------------------------------------------------
 ExterQual: Evaluates the quality of the material on the exterior (外墙材料质量)
 		
        Ex	Excellent
@@ -256,7 +436,13 @@ ExterQual: Evaluates the quality of the material on the exterior (外墙材料�
        TA	Average/Typical
        Fa	Fair
        Po	Poor
-		
+       data[, "ExterQual"] 
+       n  missing distinct 
+    1460        0        4 
+
+Ex (52, 0.036), Fa (14, 0.010), Gd (488, 0.334), TA (906, 0.621)
+
+----------------------------------------------------------------------------------
 ExterCond: Evaluates the present condition of the material on the exterior (外墙材料状况)
 		
        Ex	Excellent
@@ -264,7 +450,15 @@ ExterCond: Evaluates the present condition of the material on the exterior (外�
        TA	Average/Typical
        Fa	Fair
        Po	Poor
-		
+data[, "ExterCond"] 
+       n  missing distinct 
+    1460        0        5 
+
+lowest : Ex Fa Gd Po TA, highest: Ex Fa Gd Po TA 
+
+Ex (3, 0.002), Fa (28, 0.019), Gd (146, 0.100), Po (1, 0.001), TA (1282,
+0.878)
+------------------------------------------------------------------------------------		
 Foundation: Type of foundation (地基类型)
 		
        BrkTil	Brick & Tile
@@ -273,7 +467,14 @@ Foundation: Type of foundation (地基类型)
        Slab	Slab
        Stone	Stone
        Wood	Wood
-		
+data[, "Foundation"] 
+       n  missing distinct 
+    1460        0        6 
+
+BrkTil (146, 0.100), CBlock (634, 0.434), PConc (647, 0.443), Slab (24,
+0.016), Stone (6, 0.004), Wood (3, 0.002)
+
+----------------------------------------------------------
 BsmtQual: Evaluates the height of the basement (地下室高度)
 
        Ex	Excellent (100+ inches)	
@@ -282,7 +483,13 @@ BsmtQual: Evaluates the height of the basement (地下室高度)
        Fa	Fair (70-79 inches)
        Po	Poor (<70 inches
        NA	No Basement
-		
+data[, "BsmtQual"] 
+       n  missing distinct 
+    1423       37        4 
+
+Ex (121, 0.085), Fa (35, 0.025), Gd (618, 0.434), TA (649, 0.456)
+
+---------------------------------------------------------------		
 BsmtCond: Evaluates the general condition of the basement (地下室状况)
 
        Ex	Excellent
@@ -291,15 +498,23 @@ BsmtCond: Evaluates the general condition of the basement (地下室状况)
        Fa	Fair - dampness or some cracking or settling
        Po	Poor - Severe cracking, settling, or wetness
        NA	No Basement
-	
+data[, "BsmtCond"] 
+       n  missing distinct 
+    1423       37        4 
+Fa (45, 0.032), Gd (65, 0.046), Po (2, 0.001), TA (1311, 0.921)
+-----------------------------------------------------------------------	
 BsmtExposure: Refers to walkout or garden level walls (花园阶梯墙，可谷歌图片之)
-
        Gd	Good Exposure
        Av	Average Exposure (split levels or foyers typically score average or above)	
        Mn	Mimimum Exposure
        No	No Exposure
        NA	No Basement
-	
+data[, "BsmtExposure"] 
+       n  missing distinct 
+    1422       38        4 
+Av (221, 0.155), Gd (134, 0.094), Mn (114, 0.080), No (953, 0.670)
+
+------------------------------------------------------------------------
 BsmtFinType1: Rating of basement finished area (第一种地下室的评分)
 
        GLQ	Good Living Quarters
@@ -309,9 +524,22 @@ BsmtFinType1: Rating of basement finished area (第一种地下室的评分)
        LwQ	Low Quality
        Unf	Unfinshed
        NA	No Basement
-		
-BsmtFinSF1: Type 1 finished square feet (第一种地下室部分的面积)
+data[, "BsmtFinType1"] 
+       n  missing distinct 
+    1423       37        6 
 
+ALQ (220, 0.155), BLQ (148, 0.104), GLQ (418, 0.294), LwQ (74, 0.052), Rec
+(133, 0.093), Unf (430, 0.302)
+
+------------------------------------------------------------------------
+BsmtFinSF1: Type 1 finished square feet (第一种地下室部分的面积)
+ata[, "BsmtFinSF1"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      637    0.967    443.6    484.5      0.0      0.0 
+     .25      .50      .75      .90      .95 
+     0.0    383.5    712.2   1065.5   1274.0 
+
+----------------------------------------------------------------
 BsmtFinType2: Rating of basement finished area (if multiple types)
 
        GLQ	Good Living Quarters
@@ -321,22 +549,52 @@ BsmtFinType2: Rating of basement finished area (if multiple types)
        LwQ	Low Quality
        Unf	Unfinshed
        NA	No Basement
-
+data[, "BsmtFinType2"] 
+       n  missing distinct 
+    1422       38        6 
+ALQ (19, 0.013), BLQ (33, 0.023), GLQ (14, 0.010), LwQ (46, 0.032), Rec (54,
+0.038), Unf (1256, 0.883)
+-------------------------------------------------------------------
 BsmtFinSF2: Type 2 finished square feet
+data[, "BsmtFinSF2"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      144    0.305    46.55    86.58      0.0      0.0 
+     .25      .50      .75      .90      .95 
+     0.0      0.0      0.0    117.2    396.2 
 
+lowest :    0   28   32   35   40, highest: 1080 1085 1120 1127 1474 
+-------------------------------------------------------------------
 BsmtUnfSF: Unfinished square feet of basement area
+data[, "BsmtUnfSF"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      780    0.999    567.2    486.6      0.0     74.9 
+     .25      .50      .75      .90      .95 
+   223.0    477.5    808.0   1232.0   1468.0 
 
+lowest :    0   14   15   23   26, highest: 2042 2046 2121 2153 2336 
+------------------------------------------------------------------
 TotalBsmtSF: Total square feet of basement area
+data[, "TotalBsmtSF"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      721        1     1057    459.5    519.3    636.9 
+     .25      .50      .75      .90      .95 
+   795.8    991.5   1298.2   1602.2   1753.0 
 
+lowest :    0  105  190  264  270, highest: 3094 3138 3200 3206 6110 
+------------------------------------------------------------
 Heating: Type of heating  (加热方式)
-		
        Floor	Floor Furnace
        GasA	Gas forced warm air furnace
        GasW	Gas hot water or steam heat
        Grav	Gravity furnace	
        OthW	Hot water or steam heat other than gas
        Wall	Wall furnace
-		
+data[, "Heating"] 
+       n  missing distinct 
+    1460        0        6 
+Floor (1, 0.001), GasA (1428, 0.978), GasW (18, 0.012), Grav (7, 0.005),
+OthW (2, 0.001), Wall (4, 0.003)
+------------------------------------------------------------
 HeatingQC: Heating quality and condition (加热质量和状况)
 
        Ex	Excellent
@@ -344,12 +602,24 @@ HeatingQC: Heating quality and condition (加热质量和状况)
        TA	Average/Typical
        Fa	Fair
        Po	Poor
-		
+data[, "HeatingQC"] 
+       n  missing distinct 
+    1460        0        5 
+
+Ex (741, 0.508), Fa (49, 0.034), Gd (241, 0.165), Po (1, 0.001), TA (428,
+0.293)
+
+-------------------------------------------------------------		
 CentralAir: Central air conditioning  (中央空调)
 
        N	No
        Y	Yes
-		
+data[, "CentralAir"] 
+       n  missing distinct 
+    1460        0        2 
+
+N (95, 0.065), Y (1365, 0.935)
+--------------------------------------------------------------
 Electrical: Electrical system      (电力系统)
 
        SBrkr	Standard Circuit Breakers & Romex
@@ -357,27 +627,89 @@ Electrical: Electrical system      (电力系统)
        FuseF	60 AMP Fuse Box and mostly Romex wiring (Fair)
        FuseP	60 AMP Fuse Box and mostly knob & tube wiring (poor)
        Mix	Mixed
-		
-1stFlrSF: First Floor square feet  (1楼面积)
- 
-2ndFlrSF: Second floor square feet
+data[, "Electrical"] 
+       n  missing distinct 
+    1459        1        5 
+FuseA (94, 0.064), FuseF (27, 0.019), FuseP (3, 0.002), Mix (1, 0.001),
+SBrkr (1334, 0.914)
+--------------------------------------------------------------
+X1stFlrSF: First Floor square feet  (1楼面积)
+data[, "X1stFlrSF"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      753        1     1163    416.4    673.0    756.9 
+     .25      .50      .75      .90      .95 
+---------------------------------------------------------
+X2ndFlrSF: Second floor square feet
+data[, "X2ndFlrSF"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      417    0.817      347    450.2      0.0      0.0 
+     .25      .50      .75      .90      .95 
+     0.0      0.0    728.0    954.2   1141.0 
 
+---------------------------------------------------------
 LowQualFinSF: Low quality finished square feet (all floors) (完工情况较差的面积)
-
+data[, "LowQualFinSF"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       24    0.052    5.845    11.55        0        0 
+     .25      .50      .75      .90      .95 
+       0        0        0        0        0 
+-----------------------------------------------------------
 GrLivArea: Above grade (ground) living area square feet (地上可居住面积)
+data[, "GrLivArea"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      861        1     1515    563.1      848      912 
+     .25      .50      .75      .90      .95 
+    1130     1464     1777     2158     2466 
+-----------------------------------------------------------
 
 BsmtFullBath: Basement full bathrooms (地下室full bathroom的个数)
+data[, "BsmtFullBath"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        4    0.733   0.4253   0.5085 
 
+0 (856, 0.586), 1 (588, 0.403), 2 (15, 0.010), 3 (1, 0.001)
+----------------------------------------------------------
 BsmtHalfBath: Basement half bathrooms （地下室half bathroom的个数)
+data[, "BsmtHalfBath"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        3    0.159  0.05753   0.1088 
 
+0 (1378, 0.944), 1 (80, 0.055), 2 (2, 0.001)
+----------------------------------------------------------
 FullBath: Full bathrooms above grade  (地上的full bathroom个数)
+data[, "FullBath"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        4    0.766    1.565   0.5521 
 
+0 (9, 0.006), 1 (650, 0.445), 2 (768, 0.526), 3 (33, 0.023)
+----------------------------------------------------------
 HalfBath: Half baths above grade
+data[, "HalfBath"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        3    0.706   0.3829   0.4852 
 
-Bedroom: Bedrooms above grade (does NOT include basement bedrooms)  (地上的卧室个数)
+0 (913, 0.625), 1 (535, 0.366), 2 (12, 0.008)
 
-Kitchen: Kitchens above grade (地上厨房个数)
+----------------------------------------------------------
+BedroomAbvGr: Bedrooms above grade (does NOT include basement bedrooms)  (地上的卧室个数)
+data[, "BedroomAbvGr"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        8    0.815    2.866    0.818 
 
+lowest : 0 1 2 3 4, highest: 3 4 5 6 8 
+
+0 (6, 0.004), 1 (50, 0.034), 2 (358, 0.245), 3 (804, 0.551), 4 (213, 0.146),
+5 (21, 0.014), 6 (7, 0.005), 8 (1, 0.001)
+
+----------------------------------------------------------
+
+KitchenAbvGr: Kitchens above grade (地上厨房个数)
+data[, "KitchenAbvGr"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        4    0.133    1.047  0.09174 
+
+0 (1, 0.001), 1 (1392, 0.953), 2 (65, 0.045), 3 (2, 0.001)
+----------------------------------------------------------
 KitchenQual: Kitchen Quality  （厨房质量)
 
        Ex	Excellent
@@ -385,9 +717,30 @@ KitchenQual: Kitchen Quality  （厨房质量)
        TA	Typical/Average
        Fa	Fair
        Po	Poor
-       	
-TotRmsAbvGrd: Total rooms above grade (does not include bathrooms) (地上房间总数)
+data[, "KitchenQual"] 
+       n  missing distinct 
+    1460        0        4 
 
+Ex (100, 0.068), Fa (39, 0.027), Gd (586, 0.401), TA (735, 0.503)
+
+------------------------------------------------------------
+TotRmsAbvGrd: Total rooms above grade (does not include bathrooms) (地上房间总数)
+data[, "TotRmsAbvGrd"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       12    0.958    6.518    1.762        4        5 
+     .25      .50      .75      .90      .95 
+       5        6        7        9       10 
+
+lowest :  2  3  4  5  6, highest:  9 10 11 12 14 
+                                                                            
+Value          2     3     4     5     6     7     8     9    10    11    12
+Frequency      1    17    97   275   402   329   187    75    47    18    11
+Proportion 0.001 0.012 0.066 0.188 0.275 0.225 0.128 0.051 0.032 0.012 0.008
+                
+Value         14
+Frequency      1
+Proportion 0.001
+------------------------------------------------------------
 Functional: Home functionality (Assume typical unless deductions are warranted) (房屋实用性)
 
        Typ	Typical Functionality
@@ -398,9 +751,23 @@ Functional: Home functionality (Assume typical unless deductions are warranted) 
        Maj2	Major Deductions 2
        Sev	Severely Damaged
        Sal	Salvage only
-		
-Fireplaces: Number of fireplaces (壁炉个数)
+data[, "Functional"] 
+       n  missing distinct 
+    1460        0        7 
 
+lowest : Maj1 Maj2 Min1 Min2 Mod , highest: Min1 Min2 Mod  Sev  Typ  
+
+Maj1 (14, 0.010), Maj2 (5, 0.003), Min1 (31, 0.021), Min2 (34, 0.023), Mod
+(15, 0.010), Sev (1, 0.001), Typ (1360, 0.932)
+
+-----------------------------------------------------------
+Fireplaces: Number of fireplaces (壁炉个数)
+data[, "Fireplaces"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        4    0.806    0.613   0.6566 
+
+0 (690, 0.473), 1 (650, 0.445), 2 (115, 0.079), 3 (5, 0.003)
+----------------------------------------------------------
 FireplaceQu: Fireplace quality  （壁炉质量)
 
        Ex	Excellent - Exceptional Masonry Fireplace
@@ -409,7 +776,13 @@ FireplaceQu: Fireplace quality  （壁炉质量)
        Fa	Fair - Prefabricated Fireplace in basement
        Po	Poor - Ben Franklin Stove
        NA	No Fireplace
-		
+ata[, "FireplaceQu"] 
+       n  missing distinct 
+     770      690        5 
+Ex (24, 0.031), Fa (33, 0.043), Gd (380, 0.494), Po (20, 0.026), TA (313,
+0.406)
+
+----------------------------------------------------------
 GarageType: Garage location  (车库位置)
 		
        2Types	More than one type of garage
@@ -419,55 +792,146 @@ GarageType: Garage location  (车库位置)
        CarPort	Car Port
        Detchd	Detached from home
        NA	No Garage
-		
+data[, "GarageType"] 
+       n  missing distinct 
+    1379       81        6 
+
+2Types (6, 0.004), Attchd (870, 0.631), Basment (19, 0.014), BuiltIn (88,
+0.064), CarPort (9, 0.007), Detchd (387, 0.281)
+----------------------------------------------------------
 GarageYrBlt: Year garage was built (车库建造年份)
-		
+建议转换成距今年数
+data[, "GarageYrBlt"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1379       81       97        1     1979    27.63     1930     1945 
+     .25      .50      .75      .90      .95 
+    1961     1980     2002     2006     2007 
+----------------------------------------------------------
 GarageFinish: Interior finish of the garage (车库内部完工情况)
 
        Fin	Finished
        RFn	Rough Finished	
        Unf	Unfinished
        NA	No Garage
-		
+data[, "GarageFinish"] 
+       n  missing distinct 
+    1379       81        3 
+
+Fin (352, 0.255), RFn (422, 0.306), Unf (605, 0.439)
+-----------------------------------------------------------
 GarageCars: Size of garage in car capacity  (车库可停轿车数)
-
+data[, "GarageCars"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        5    0.802    1.767   0.7609 
+0 (81, 0.055), 1 (369, 0.253), 2 (824, 0.564), 3 (181, 0.124), 4 (5, 0.003)
+-----------------------------------------------------------
 GarageArea: Size of garage in square feet   (车库面积)
-
+data[, "GarageArea"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      441        1      473    234.9      0.0    240.0 
+     .25      .50      .75      .90      .95 
+   334.5    480.0    576.0    757.1    850.1 
+-----------------------------------------------------------
 GarageQual: Garage quality   (车库质量)
 
        Ex	Excellent
        Gd	Good
        TA	Typical/Average
-       Fa	Fair
        Po	Poor
+       Fa     Fair
        NA	No Garage
-		
-GarageCond: Garage condition  (车库状况)
+data[, "GarageQual"] 
+       n  missing distinct 
+    1379       81        5 
 
+Ex (3, 0.002), Fa (48, 0.035), Gd (14, 0.010), Po (3, 0.002), TA (1311,
+0.951)
+-----------------------------------------------------------
+GarageCond: Garage condition  (车库状况)
        Ex	Excellent
        Gd	Good
        TA	Typical/Average
        Fa	Fair
        Po	Poor
        NA	No Garage
-		
+data[, "GarageCond"] 
+       n  missing distinct 
+    1379       81        5 
+
+Ex (2, 0.001), Fa (35, 0.025), Gd (9, 0.007), Po (7, 0.005), TA (1326,
+0.962)
+----------------------------------------------------------
 PavedDrive: Paved driveway (是否有铺好的进库路)
 
        Y	Paved 
        P	Partial Pavement
        N	Dirt/Gravel
-		
+data[, "PavedDrive"] 
+       n  missing distinct 
+    1460        0        3 
+
+N (90, 0.062), P (30, 0.021), Y (1340, 0.918)
+---------------------------------------------------------
 WoodDeckSF: Wood deck area in square feet (木地板面积)
+data[, "WoodDeckSF"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      274    0.858    94.24      125        0        0 
+     .25      .50      .75      .90      .95 
+       0        0      168      262      335 
 
+---------------------------------------------------------
 OpenPorchSF: Open porch area in square feet  (门前开放入口的面积)
-
+data[, "OpenPorchSF"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      202    0.909    46.66    62.43        0        0 
+     .25      .50      .75      .90      .95 
+       0       25       68      130      175 
+----------------------------------------------------------
 EnclosedPorch: Enclosed porch area in square feet (门前封闭入口的面积)
 
+data[, "EnclosedPorch"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0      120    0.369    21.95    39.39      0.0      0.0 
+     .25      .50      .75      .90      .95 
+     0.0      0.0      0.0    112.0    180.1 
+----------------------------------------------------------
 3SsnPorch: Three season porch area in square feet (Three season风格入口处面积)
 
+data[, "X3SsnPorch"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       20    0.049     3.41    6.739        0        0 
+     .25      .50      .75      .90      .95 
+       0        0        0        0        0 
+
+lowest :   0  23  96 130 140, highest: 290 304 320 407 508 
+                                                                            
+Value          0    23    96   130   140   144   153   162   168   180   182
+Frequency   1436     1     1     1     1     2     1     1     3     2     1
+Proportion 0.984 0.001 0.001 0.001 0.001 0.001 0.001 0.001 0.002 0.001 0.001
+                                                                
+Value        196   216   238   245   290   304   320   407   508
+Frequency      1     2     1     1     1     1     1     1     1
+Proportion 0.001 0.001 0.001 0.001 0.001 0.001 0.001 0.001 0.001
+
+----------------------------------------------------------
+
 ScreenPorch: Screen porch area in square feet (Screen风格入口处面积)
+data[, "ScreenPorch"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       76     0.22    15.06    28.27        0        0 
+     .25      .50      .75      .90      .95 
+       0        0        0        0      160 
+
+----------------------------------------------------------
 
 PoolArea: Pool area in square feet (泳池面积)
+data[, "PoolArea"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        8    0.014    2.759    5.497 
+
+0 (1453, 0.995), 480 (1, 0.001), 512 (1, 0.001), 519 (1, 0.001), 555 (1,
+0.001), 576 (1, 0.001), 648 (1, 0.001), 738 (1, 0.001)
+----------------------------------------------------------
 
 PoolQC: Pool quality (泳池质量)
 		
@@ -476,7 +940,13 @@ PoolQC: Pool quality (泳池质量)
        TA	Average/Typical
        Fa	Fair
        NA	No Pool
-		
+data[, "PoolQC"] 
+       n  missing distinct 
+       7     1453        3 
+
+Ex (2, 0.286), Fa (2, 0.286), Gd (3, 0.429)
+
+------------------------------------------------------------
 Fence: Fence quality (栅栏质量)
 		
        GdPrv	Good Privacy
@@ -484,7 +954,13 @@ Fence: Fence quality (栅栏质量)
        GdWo	Good Wood
        MnWw	Minimum Wood/Wire
        NA	No Fence
-	
+data[, "Fence"] 
+       n  missing distinct 
+     281     1179        4 
+
+GdPrv (59, 0.210), GdWo (54, 0.192), MnPrv (157, 0.559), MnWw (11, 0.039)
+------------------------------------------------------------
+
 MiscFeature: Miscellaneous feature not covered in other categories (其他功能)
 		
        Elev	Elevator
@@ -493,13 +969,53 @@ MiscFeature: Miscellaneous feature not covered in other categories (其他功能
        Shed	Shed (over 100 SF)
        TenC	Tennis Court
        NA	None
-		
+data[, "MiscFeature"] 
+       n  missing distinct 
+      54     1406        4 
+
+Gar2 (2, 0.037), Othr (2, 0.037), Shed (49, 0.907), TenC (1, 0.019)
+
+------------------------------------------------------------
 MiscVal: $Value of miscellaneous feature (其他功能的价值)
+data[, "MiscVal"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       21    0.103    43.49    85.67        0        0 
+     .25      .50      .75      .90      .95 
+       0        0        0        0        0 
+data[, "MiscVal"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       21    0.103    43.49    85.67        0        0 
+     .25      .50      .75      .90      .95 
+       0        0        0        0        0 
+------------------------------------------------------------
 
 MoSold: Month Sold (MM) (卖出月份)
+data[, "MoSold"] 
+       n  missing distinct     Info     Mean      Gmd      .05      .10 
+    1460        0       12    0.985    6.322    3.041        2        3 
+     .25      .50      .75      .90      .95 
+       5        6        8       10       11 
+
+lowest :  1  2  3  4  5, highest:  8  9 10 11 12 
+                                                                            
+Value          1     2     3     4     5     6     7     8     9    10    11
+Frequency     58    52   106   141   204   253   234   122    63    89    79
+Proportion 0.040 0.036 0.073 0.097 0.140 0.173 0.160 0.084 0.043 0.061 0.054
+                
+Value         12
+Frequency     59
+Proportion 0.040
+------------------------------------------------------------
 
 YrSold: Year Sold (YYYY) （卖出年份)
+data[, "YrSold"] 
+       n  missing distinct     Info     Mean      Gmd 
+    1460        0        5    0.955     2008    1.498 
 
+2006 (314, 0.215), 2007 (329, 0.225), 2008 (304, 0.208), 2009 (338, 0.232),
+2010 (175, 0.120)
+
+------------------------------------------------------------
 SaleType: Type of sale  (销售方式)
 		
        WD 	Warranty Deed - Conventional
@@ -512,7 +1028,17 @@ SaleType: Type of sale  (销售方式)
        ConLI	Contract Low Interest
        ConLD	Contract Low Down
        Oth	Other
-		
+data[, "SaleType"] 
+       n  missing distinct 
+    1460        0        9 
+
+lowest : COD   Con   ConLD ConLI ConLw
+highest: ConLw CWD   New   Oth   WD    
+                                                                
+Value        COD   Con ConLD ConLI ConLw   CWD   New   Oth    WD
+Frequency     43     2     9     5     5     4   122     3  1267
+Proportion 0.029 0.001 0.006 0.003 0.003 0.003 0.084 0.002 0.868
+------------------------------------------------------------		
 SaleCondition: Condition of sale (销售状态)
 
        Normal	Normal Sale
@@ -521,3 +1047,10 @@ SaleCondition: Condition of sale (销售状态)
        Alloca	Allocation - two linked properties with separate deeds, typically condo with a garage unit	
        Family	Sale between family members
        Partial	Home was not completed when last assessed (associated with New Homes)
+data[, "SaleCondition"] 
+       n  missing distinct 
+    1460        0        6 
+
+Abnorml (101, 0.069), AdjLand (4, 0.003), Alloca (12, 0.008), Family (20,
+0.014), Normal (1198, 0.821), Partial (125, 0.086)
+------------------------------------------------------------
