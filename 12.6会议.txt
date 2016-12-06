@@ -1,0 +1,41 @@
+预处理：
+	缺失值、相关性、分布
+模型：
+	离散值进行回归探究
+沈佳楠
+"MSSubClass"    "MSZoning"      "LotFrontage"  
+ [5] "LotArea"       "Street"        "Alley"         "LotShape"     
+ [9] "LandContour"   "Utilities"     "LotConfig"     "LandSlope"    
+[13] "Neighborhood"  "Condition1"    "Condition2"    "BldgType"     
+[17] "HouseStyle"    "OverallQual"   "OverallCond"   "YearBuilt"    
+[21] "YearRemodAdd"  "RoofStyle"     "RoofMatl"      "Exterior1st"  
+[25] "Exterior2nd"   "MasVnrType"    "MasVnrArea"    "ExterQual"
+
+刘劭
+ExterCond"     "Foundation"    "BsmtQual"      "BsmtCond"     
+[33] "BsmtExposure"  "BsmtFinType1"  "BsmtFinSF1"    "BsmtFinType2" 
+[37] "BsmtFinSF2"    "BsmtUnfSF"     "TotalBsmtSF"   "Heating"      
+[41] "HeatingQC"     "CentralAir"    "Electrical"    "X1stFlrSF"    
+[45] "X2ndFlrSF"     "LowQualFinSF"  "GrLivArea"     "BsmtFullBath" 
+[49] "BsmtHalfBath"  "FullBath"      "HalfBath"      "BedroomAbvGr" 
+[53] "KitchenAbvGr"  "KitchenQual"   "TotRmsAbvGrd"
+
+陈乾明
+"Functional"   
+"Fireplaces"    "FireplaceQu"   "GarageType"    "GarageYrBlt"  
+"GarageFinish"  "GarageCars"    "GarageArea"    "GarageQual"   
+"GarageCond"    "PavedDrive"    "WoodDeckSF"    "OpenPorchSF"  
+"EnclosedPorch" "X3SsnPorch"    "ScreenPorch"   "PoolArea"     
+"PoolQC"        "Fence"         "MiscFeature"   "MiscVal"      
+"MoSold"        "YrSold"        "SaleType"      "SaleCondition"
+"SalePrice"    
+
+
+
+
+
+
+
+
+
+
