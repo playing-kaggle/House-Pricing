@@ -24,3 +24,13 @@ train_data = train_data.drop(['MSZoning','MSZoning'],axis=1)# delete two or more
 #delete rows
 train_data = train_data.drop(4)
 
+#value for null data
+train_data.loc[train_data[:]['BsmtQual'].isnull(),'BsmtQual'] = 'NoBsmt'
+
+#vector
+
+def preprocess_train():
+    train_data = pd.read_csv('../../train.csv', index_col='Id')
+    return train_data
+
+
