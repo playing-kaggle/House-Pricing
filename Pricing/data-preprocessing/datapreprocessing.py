@@ -67,8 +67,7 @@ def data_cleaning(file_path):
 '''
 
 
-def preprocess_train():
-    data = data_cleaning('../../train.csv')
+def vectorize(data):
     nomial_list = ['MSSubClass', 'MSZoning', 'LotShape', 'LandContour', 'LotConfig', 'LandSlope',
                    'Neighborhood', 'Condition1', 'BldgType', 'HouseStyle', 'OverallQual', 'OverallCond', 'RoofStyle',
                    'Exterior1st', 'Exterior2nd', 'MasVnrType', 'ExterQual', 'ExterCond', 'Foundation',
@@ -76,15 +75,6 @@ def preprocess_train():
                    'HeatingQC', 'CentralAir', 'Electrical', 'KitchenQual', 'Functional', 'FireplaceQu',
                    'GarageType', 'GarageFinish', 'GarageQual', 'PavedDrive', 'PoolArea', 'Fence', 'SaleType',
                    'SaleCondition']
-
-    numeric_list = ['BsmtFullBath', 'LotArea', 'YearRemodAdd', 'GrLivArea', 'BsmtHalfBath', 'MiscVal', 'YearBuilt',
-                    'WoodDeckSF', 'KitchenAbvGr', 'TotalBsmtSF', 'GarageArea', 'GarageCars', 'OpenPorchSF', 'MoSold',
-                    'LowQualFinSF', 'BedroomAbvGr', 'Fireplaces', '1stFlrSF', 'FullBath', 'BsmtFinSF1', 'BsmtFinSF2',
-                    'HalfBath',
-                    'Porch', '2ndFlrSF', 'MasVnrArea', 'YrSold', 'BsmtUnfSF', 'LotFrontage', 'TotRmsAbvGrd']
-    '''
-        vectorization nomial attributes
-    '''
     for column in nomial_list:
         unique_value = data[column].unique()
         for value in unique_value:
@@ -93,44 +83,62 @@ def preprocess_train():
             data.loc[data[column] != value, new_column_name] = 0
         del data[column]
 
+
+def standardize(data):
+
+    numeric_list = ['BsmtFullBath', 'LotArea', 'YearRemodAdd', 'GrLivArea', 'BsmtHalfBath', 'MiscVal', 'YearBuilt',
+                    'WoodDeckSF', 'KitchenAbvGr', 'TotalBsmtSF', 'GarageArea', 'GarageCars', 'OpenPorchSF', 'MoSold',
+                    'LowQualFinSF', 'BedroomAbvGr', 'Fireplaces', '1stFlrSF', 'FullBath', 'BsmtFinSF1', 'BsmtFinSF2',
+                    'HalfBath',
+                    'Porch', '2ndFlrSF', 'MasVnrArea', 'YrSold', 'BsmtUnfSF', 'LotFrontage', 'TotRmsAbvGrd']
+
     data.loc[:, numeric_list] = preprocessing.scale(data.loc[:, numeric_list])
-    return data
 
 
 def build_model():
-    processed_data = preprocess_train()
-    processed_data.drop('Id', axis=1, inplace=True)
+    # when building a model, it is better to join train_data and test data together
+    train_data = data_cleaning('../../train.csv')
+    test_data = data_cleaning('../../test.csv')
 
-    print(processed_data)
-
-    data_X = processed_data.drop('SalePrice', axis=1)
-    data_Y = processed_data['SalePrice']
-    # print(data_X['BsmtFinSF1'])
-    # data_X = np.asarray(data_X)
-    # data_Y = np.asarray(data_Y)
-    # print(data_X);print(data_Y)
+    test_data.fillna(value={'BsmtFinSF1': 0, 'BsmtFinSF2': 0, 'BsmtUnfSF': 0,
+                            'TotalBsmtSF': 0, 'BsmtFullBath': 0, 'BsmtHalfBath': 0,
+                            'GarageCars': 0, 'GarageArea': 0}, inplace=True)
+    salePrice = train_data['SalePrice']
+    total_data = train_data.drop('SalePrice', axis=1).append(test_data)
+    total_data.drop('Id',inplace=True)
+    print(np.shape(total_data))
+    vectorize(total_data)
+    standardize(total_data)
+    train_data = total_data[0:1460]
+    test_data = total_data[1460:]
     regr = linear_model.LinearRegression()
-    regr.fit(data_X, data_Y)
-    return data_X,data_Y,regr
+    regr.fit(train_data,salePrice)
+    print('Coefficients: \n', regr.coef_)
+    print("Mean squared error: %.2f"
+              % np.mean((regr.predict(train_data) - salePrice) ** 2))
+        # Explained variance score: 1 is perfect prediction
+    print('Variance score: %.2f' % regr.score(train_data, salePrice))
 
-data_X,data_Y,regr = build_model()
-print('Coefficients: \n', regr.coef_)
+    # plt.scatter(salePrice, regr.predict(train_data))
+    #
+    # plt.show()
+    return regr, test_data
 
-print(regr.predict(data_X))
-print("Mean squared error: %.2f"
-          % np.mean((regr.predict(data_X) - data_Y) ** 2))
-    # Explained variance score: 1 is perfect prediction
-print('Variance score: %.2f' % regr.score(data_X, data_Y))
 
-    # print(data)
-    # plt.plot(data_Y, regr.predict(data_X), color='blue',
-    #        linewidth=3)
-plt.scatter(data_Y, regr.predict(data_X))
-    #plt.xticks(())
-    #plt.yticks(())
-plt.show()
+
+
 
 def predict_test_data():
-    test_data = pd.read_csv('../../test.csv', index_col='Id')
-    np.sum(test_data.isnull(),axis=0)
-    pass
+    regr,test_data = build_model()
+    print(test_data.columns[np.sum(test_data.isnull(), axis=0) != 0])
+    result = regr.predict(test_data)
+    print('result is null :',sum(result == np.nan))
+    print('length: \n', len(result))
+
+    df = pd.DataFrame(np.abs(np.round(result,1)),index=list(range(1461,2920)),columns=['SalePrice'])
+    df.to_csv('../../submission1214.csv')
+    print('result: \n', df)
+    #predict = regr.predict(test_data)
+
+
+predict_test_data()
