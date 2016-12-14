@@ -10,6 +10,8 @@ train_data = pd.read_csv('../../train.csv', index_col='Id')
 '''
     vectorize using some column MSZoning as an example
 '''
+
+
 column_list = ['MSSubClass', 'MSZoning', 'LotShape', 'LandContour']
 new_column_list = []
 for column in column_list:
@@ -19,7 +21,7 @@ for column in column_list:
         train_data.loc[train_data[column] == value, new_column_name] = 1
         train_data.loc[train_data[column] != value, new_column_name] = 0
         new_column_list.append(new_column_name)
-    del train_data[column]
+    train_data.drop(column,inplace=True)
 #print(train_data.columns)
 #print(train_data[new_column_list])
 new_column_list.extend(['BsmtFinSF1','SalePrice'])
