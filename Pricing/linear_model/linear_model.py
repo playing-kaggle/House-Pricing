@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import cross_val_score,train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression,RidgeCV,LassoCV,ElasticNetCV
+from sklearn.linear_model import LinearRegression, RidgeCV, LassoCV, ElasticNetCV
 from sklearn.metrics import mean_squared_error, make_scorer
-from scipy.stats import  skew
+from scipy.stats import skew
 import matplotlib.pyplot as plt
 
-pd.set_option('display.float_format',lambda x: '%.3f' % x)
+pd.set_option('display.float_format', lambda x: '%.3f' % x)
 train = pd.read_csv('../../train.csv')
+test = pd.read_csv('../../test.csv')
 
 print(train.shape)
-
-
-# Drop Id column
-train.drop("Id", axis = 1, inplace = True)
 
 # Looking for outliers, as indicated in https://ww2.amstat.org/publications/jse/v19n3/decock.pdf
 # plt.scatter(train.GrLivArea, train.SalePrice, c = "blue", marker = "s")
@@ -26,11 +23,17 @@ train.drop("Id", axis = 1, inplace = True)
 train = train[train.GrLivArea < 4000]
 train.SalePrice = np.log1p(train.SalePrice)
 y = train.SalePrice
+
+# combine train_data and test_data together
+train = train.append(test, ignore_index=True)
+# Drop  column
+train.drop(['Id', 'Street', 'Utilities', 'Condition2', 'RoofMatl', 'Alley',
+            'GarageYrBlt', 'MiscFeature'], axis=1, inplace=True)
+
 '''
 fill missing data
 '''
-#Alley : data description says NA means "no alley access"
-train.loc[:, "Alley"] = train.loc[:, "Alley"].fillna("None")
+
 # BedroomAbvGr : NA most likely means 0
 train.loc[:, "BedroomAbvGr"] = train.loc[:, "BedroomAbvGr"].fillna(0)
 # BsmtQual etc : data description says NA for basement features is "no basement"
@@ -46,7 +49,6 @@ train.loc[:, "BsmtUnfSF"] = train.loc[:, "BsmtUnfSF"].fillna(0)
 train.loc[:, "CentralAir"] = train.loc[:, "CentralAir"].fillna("N")
 # Condition : NA most likely means Normal
 train.loc[:, "Condition1"] = train.loc[:, "Condition1"].fillna("Norm")
-train.loc[:, "Condition2"] = train.loc[:, "Condition2"].fillna("Norm")
 # EnclosedPorch : NA most likely means no enclosed porch
 train.loc[:, "EnclosedPorch"] = train.loc[:, "EnclosedPorch"].fillna(0)
 # External stuff : NA most likely means average
@@ -81,8 +83,6 @@ train.loc[:, "LotShape"] = train.loc[:, "LotShape"].fillna("Reg")
 # MasVnrType : NA most likely means no veneer
 train.loc[:, "MasVnrType"] = train.loc[:, "MasVnrType"].fillna("None")
 train.loc[:, "MasVnrArea"] = train.loc[:, "MasVnrArea"].fillna(0)
-# MiscFeature : data description says NA means "no misc feature"
-train.loc[:, "MiscFeature"] = train.loc[:, "MiscFeature"].fillna("No")
 train.loc[:, "MiscVal"] = train.loc[:, "MiscVal"].fillna(0)
 # OpenPorchSF : NA most likely means no open porch
 train.loc[:, "OpenPorchSF"] = train.loc[:, "OpenPorchSF"].fillna(0)
@@ -97,114 +97,117 @@ train.loc[:, "SaleCondition"] = train.loc[:, "SaleCondition"].fillna("Normal")
 train.loc[:, "ScreenPorch"] = train.loc[:, "ScreenPorch"].fillna(0)
 # TotRmsAbvGrd : NA most likely means 0
 train.loc[:, "TotRmsAbvGrd"] = train.loc[:, "TotRmsAbvGrd"].fillna(0)
-# Utilities : NA most likely means all public utilities
-train.loc[:, "Utilities"] = train.loc[:, "Utilities"].fillna("AllPub")
+
 # WoodDeckSF : NA most likely means no wood deck
 train.loc[:, "WoodDeckSF"] = train.loc[:, "WoodDeckSF"].fillna(0)
 
 # Some numerical features are actually really categories
-train = train.replace({"MSSubClass" : {20 : "SC20", 30 : "SC30", 40 : "SC40", 45 : "SC45",
-                                       50 : "SC50", 60 : "SC60", 70 : "SC70", 75 : "SC75",
-                                       80 : "SC80", 85 : "SC85", 90 : "SC90", 120 : "SC120",
-                                       150 : "SC150", 160 : "SC160", 180 : "SC180", 190 : "SC190"},
-                       "MoSold" : {1 : "Jan", 2 : "Feb", 3 : "Mar", 4 : "Apr", 5 : "May", 6 : "Jun",
-                                   7 : "Jul", 8 : "Aug", 9 : "Sep", 10 : "Oct", 11 : "Nov", 12 : "Dec"}
-                      })
+train = train.replace({"MSSubClass": {20: "SC20", 30: "SC30", 40: "SC40", 45: "SC45",
+                                      50: "SC50", 60: "SC60", 70: "SC70", 75: "SC75",
+                                      80: "SC80", 85: "SC85", 90: "SC90", 120: "SC120",
+                                      150: "SC150", 160: "SC160", 180: "SC180", 190: "SC190"},
+                       "MoSold": {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
+                                  7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"}
+                       })
 
 # Encode some ordered categorical features as ordered numbers
-train = train.replace({"Alley" : {"Grvl" : 1, "Pave" : 2},
-                       "BsmtCond" : {"No" : 0, "Po" : 1, "Fa" : 2, "TA" : 3, "Gd" : 4, "Ex" : 5},
-                       "BsmtExposure" : {"No" : 0, "Mn" : 1, "Av": 2, "Gd" : 3},
-                       "BsmtFinType1" : {"No" : 0, "Unf" : 1, "LwQ": 2, "Rec" : 3, "BLQ" : 4,
-                                         "ALQ" : 5, "GLQ" : 6},
-                       "BsmtFinType2" : {"No" : 0, "Unf" : 1, "LwQ": 2, "Rec" : 3, "BLQ" : 4,
-                                         "ALQ" : 5, "GLQ" : 6},
-                       "BsmtQual" : {"No" : 0, "Po" : 1, "Fa" : 2, "TA": 3, "Gd" : 4, "Ex" : 5},
-                       "ExterCond" : {"Po" : 1, "Fa" : 2, "TA": 3, "Gd": 4, "Ex" : 5},
-                       "ExterQual" : {"Po" : 1, "Fa" : 2, "TA": 3, "Gd": 4, "Ex" : 5},
-                       "FireplaceQu" : {"No" : 0, "Po" : 1, "Fa" : 2, "TA" : 3, "Gd" : 4, "Ex" : 5},
-                       "Functional" : {"Sal" : 1, "Sev" : 2, "Maj2" : 3, "Maj1" : 4, "Mod": 5,
-                                       "Min2" : 6, "Min1" : 7, "Typ" : 8},
-                       "GarageCond" : {"No" : 0, "Po" : 1, "Fa" : 2, "TA" : 3, "Gd" : 4, "Ex" : 5},
-                       "GarageQual" : {"No" : 0, "Po" : 1, "Fa" : 2, "TA" : 3, "Gd" : 4, "Ex" : 5},
-                       "HeatingQC" : {"Po" : 1, "Fa" : 2, "TA" : 3, "Gd" : 4, "Ex" : 5},
-                       "KitchenQual" : {"Po" : 1, "Fa" : 2, "TA" : 3, "Gd" : 4, "Ex" : 5},
-                       "LandSlope" : {"Sev" : 1, "Mod" : 2, "Gtl" : 3},
-                       "LotShape" : {"IR3" : 1, "IR2" : 2, "IR1" : 3, "Reg" : 4},
-                       "PavedDrive" : {"N" : 0, "P" : 1, "Y" : 2},
-                       "PoolQC" : {"No" : 0, "Fa" : 1, "TA" : 2, "Gd" : 3, "Ex" : 4},
-                       "Street" : {"Grvl" : 1, "Pave" : 2},
-                       "Utilities" : {"ELO" : 1, "NoSeWa" : 2, "NoSewr" : 3, "AllPub" : 4}}
-                     )
+train = train.replace({
+    "BsmtCond": {"No": 0, "Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "BsmtExposure": {"No": 0, "Mn": 1, "Av": 2, "Gd": 3},
+    "BsmtFinType1": {"No": 0, "Unf": 1, "LwQ": 2, "Rec": 3, "BLQ": 4,
+                     "ALQ": 5, "GLQ": 6},
+    "BsmtFinType2": {"No": 0, "Unf": 1, "LwQ": 2, "Rec": 3, "BLQ": 4,
+                     "ALQ": 5, "GLQ": 6},
+    "BsmtQual": {"No": 0, "Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "ExterCond": {"Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "ExterQual": {"Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "FireplaceQu": {"No": 0, "Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "Functional": {"Sal": 1, "Sev": 2, "Maj2": 3, "Maj1": 4, "Mod": 5,
+                   "Min2": 6, "Min1": 7, "Typ": 8},
+    "GarageCond": {"No": 0, "Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "GarageQual": {"No": 0, "Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "HeatingQC": {"Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "KitchenQual": {"Po": 1, "Fa": 2, "TA": 3, "Gd": 4, "Ex": 5},
+    "LandSlope": {"Sev": 1, "Mod": 2, "Gtl": 3},
+    "LotShape": {"IR3": 1, "IR2": 2, "IR1": 3, "Reg": 4},
+    "PavedDrive": {"N": 0, "P": 1, "Y": 2},
+    "PoolQC": {"No": 0, "Fa": 1, "TA": 2, "Gd": 3, "Ex": 4},
+
+}
+)
+# handle year
+train.loc[:, 'YrSold'] = 2016 - train.loc[:, 'YrSold']
+train.loc[:, 'YearBuilt'] = 2016 - train.loc[:, 'YearBuilt']
+train.loc[:, 'YearRemodAdd'] = 2016 - train.loc[:, 'YearRemodAdd']
 
 '''
  Create new features
 '''
 # 1* Simplifications of existing features
-train["SimplOverallQual"] = train.OverallQual.replace({1 : 1, 2 : 1, 3 : 1, # bad
-                                                       4 : 2, 5 : 2, 6 : 2, # average
-                                                       7 : 3, 8 : 3, 9 : 3, 10 : 3 # good
-                                                      })
-train["SimplOverallCond"] = train.OverallCond.replace({1 : 1, 2 : 1, 3 : 1, # bad
-                                                       4 : 2, 5 : 2, 6 : 2, # average
-                                                       7 : 3, 8 : 3, 9 : 3, 10 : 3 # good
-                                                      })
-train["SimplPoolQC"] = train.PoolQC.replace({1 : 1, 2 : 1, # average
-                                             3 : 2, 4 : 2 # good
-                                            })
-train["SimplGarageCond"] = train.GarageCond.replace({1 : 1, # bad
-                                                     2 : 1, 3 : 1, # average
-                                                     4 : 2, 5 : 2 # good
-                                                    })
-train["SimplGarageQual"] = train.GarageQual.replace({1 : 1, # bad
-                                                     2 : 1, 3 : 1, # average
-                                                     4 : 2, 5 : 2 # good
-                                                    })
-train["SimplFireplaceQu"] = train.FireplaceQu.replace({1 : 1, # bad
-                                                       2 : 1, 3 : 1, # average
-                                                       4 : 2, 5 : 2 # good
-                                                      })
-train["SimplFireplaceQu"] = train.FireplaceQu.replace({1 : 1, # bad
-                                                       2 : 1, 3 : 1, # average
-                                                       4 : 2, 5 : 2 # good
-                                                      })
-train["SimplFunctional"] = train.Functional.replace({1 : 1, 2 : 1, # bad
-                                                     3 : 2, 4 : 2, # major
-                                                     5 : 3, 6 : 3, 7 : 3, # minor
-                                                     8 : 4 # typical
-                                                    })
-train["SimplKitchenQual"] = train.KitchenQual.replace({1 : 1, # bad
-                                                       2 : 1, 3 : 1, # average
-                                                       4 : 2, 5 : 2 # good
-                                                      })
-train["SimplHeatingQC"] = train.HeatingQC.replace({1 : 1, # bad
-                                                   2 : 1, 3 : 1, # average
-                                                   4 : 2, 5 : 2 # good
-                                                  })
-train["SimplBsmtFinType1"] = train.BsmtFinType1.replace({1 : 1, # unfinished
-                                                         2 : 1, 3 : 1, # rec room
-                                                         4 : 2, 5 : 2, 6 : 2 # living quarters
-                                                        })
-train["SimplBsmtFinType2"] = train.BsmtFinType2.replace({1 : 1, # unfinished
-                                                         2 : 1, 3 : 1, # rec room
-                                                         4 : 2, 5 : 2, 6 : 2 # living quarters
-                                                        })
-train["SimplBsmtCond"] = train.BsmtCond.replace({1 : 1, # bad
-                                                 2 : 1, 3 : 1, # average
-                                                 4 : 2, 5 : 2 # good
-                                                })
-train["SimplBsmtQual"] = train.BsmtQual.replace({1 : 1, # bad
-                                                 2 : 1, 3 : 1, # average
-                                                 4 : 2, 5 : 2 # good
-                                                })
-train["SimplExterCond"] = train.ExterCond.replace({1 : 1, # bad
-                                                   2 : 1, 3 : 1, # average
-                                                   4 : 2, 5 : 2 # good
-                                                  })
-train["SimplExterQual"] = train.ExterQual.replace({1 : 1, # bad
-                                                   2 : 1, 3 : 1, # average
-                                                   4 : 2, 5 : 2 # good
-                                                  })
+train["SimplOverallQual"] = train.OverallQual.replace({1: 1, 2: 1, 3: 1,  # bad
+                                                       4: 2, 5: 2, 6: 2,  # average
+                                                       7: 3, 8: 3, 9: 3, 10: 3  # good
+                                                       })
+train["SimplOverallCond"] = train.OverallCond.replace({1: 1, 2: 1, 3: 1,  # bad
+                                                       4: 2, 5: 2, 6: 2,  # average
+                                                       7: 3, 8: 3, 9: 3, 10: 3  # good
+                                                       })
+train["SimplPoolQC"] = train.PoolQC.replace({1: 1, 2: 1,  # average
+                                             3: 2, 4: 2  # good
+                                             })
+train["SimplGarageCond"] = train.GarageCond.replace({1: 1,  # bad
+                                                     2: 1, 3: 1,  # average
+                                                     4: 2, 5: 2  # good
+                                                     })
+train["SimplGarageQual"] = train.GarageQual.replace({1: 1,  # bad
+                                                     2: 1, 3: 1,  # average
+                                                     4: 2, 5: 2  # good
+                                                     })
+train["SimplFireplaceQu"] = train.FireplaceQu.replace({1: 1,  # bad
+                                                       2: 1, 3: 1,  # average
+                                                       4: 2, 5: 2  # good
+                                                       })
+train["SimplFireplaceQu"] = train.FireplaceQu.replace({1: 1,  # bad
+                                                       2: 1, 3: 1,  # average
+                                                       4: 2, 5: 2  # good
+                                                       })
+train["SimplFunctional"] = train.Functional.replace({1: 1, 2: 1,  # bad
+                                                     3: 2, 4: 2,  # major
+                                                     5: 3, 6: 3, 7: 3,  # minor
+                                                     8: 4  # typical
+                                                     })
+train["SimplKitchenQual"] = train.KitchenQual.replace({1: 1,  # bad
+                                                       2: 1, 3: 1,  # average
+                                                       4: 2, 5: 2  # good
+                                                       })
+train["SimplHeatingQC"] = train.HeatingQC.replace({1: 1,  # bad
+                                                   2: 1, 3: 1,  # average
+                                                   4: 2, 5: 2  # good
+                                                   })
+train["SimplBsmtFinType1"] = train.BsmtFinType1.replace({1: 1,  # unfinished
+                                                         2: 1, 3: 1,  # rec room
+                                                         4: 2, 5: 2, 6: 2  # living quarters
+                                                         })
+train["SimplBsmtFinType2"] = train.BsmtFinType2.replace({1: 1,  # unfinished
+                                                         2: 1, 3: 1,  # rec room
+                                                         4: 2, 5: 2, 6: 2  # living quarters
+                                                         })
+train["SimplBsmtCond"] = train.BsmtCond.replace({1: 1,  # bad
+                                                 2: 1, 3: 1,  # average
+                                                 4: 2, 5: 2  # good
+                                                 })
+train["SimplBsmtQual"] = train.BsmtQual.replace({1: 1,  # bad
+                                                 2: 1, 3: 1,  # average
+                                                 4: 2, 5: 2  # good
+                                                 })
+train["SimplExterCond"] = train.ExterCond.replace({1: 1,  # bad
+                                                   2: 1, 3: 1,  # average
+                                                   4: 2, 5: 2  # good
+                                                   })
+train["SimplExterQual"] = train.ExterQual.replace({1: 1,  # bad
+                                                   2: 1, 3: 1,  # average
+                                                   4: 2, 5: 2  # good
+                                                   })
 
 # 2* Combinations of existing features
 # Overall quality of the house
@@ -235,23 +238,23 @@ train["SimplFireplaceScore"] = train["Fireplaces"] * train["SimplFireplaceQu"]
 train["SimplKitchenScore"] = train["KitchenAbvGr"] * train["SimplKitchenQual"]
 # Total number of bathrooms
 train["TotalBath"] = train["BsmtFullBath"] + (0.5 * train["BsmtHalfBath"]) + \
-train["FullBath"] + (0.5 * train["HalfBath"])
+                     train["FullBath"] + (0.5 * train["HalfBath"])
 # Total SF for house (incl. basement)
 train["AllSF"] = train["GrLivArea"] + train["TotalBsmtSF"]
 # Total SF for 1st + 2nd floors
 train["AllFlrsSF"] = train["1stFlrSF"] + train["2ndFlrSF"]
 # Total SF for porch
 train["AllPorchSF"] = train["OpenPorchSF"] + train["EnclosedPorch"] + \
-train["3SsnPorch"] + train["ScreenPorch"]
+                      train["3SsnPorch"] + train["ScreenPorch"]
 # Has masonry veneer or not
-train["HasMasVnr"] = train.MasVnrType.replace({"BrkCmn" : 1, "BrkFace" : 1, "CBlock" : 1,
-                                               "Stone" : 1, "None" : 0})
+train["HasMasVnr"] = train.MasVnrType.replace({"BrkCmn": 1, "BrkFace": 1, "CBlock": 1,
+                                               "Stone": 1, "None": 0})
 # House completed before sale or not
-train["BoughtOffPlan"] = train.SaleCondition.replace({"Abnorml" : 0, "Alloca" : 0, "AdjLand" : 0,
-                                                      "Family" : 0, "Normal" : 0, "Partial" : 1})
-corr = train.corr()
-corr.sort_values(["SalePrice"], ascending = False, inplace = True)
-#print(corr.SalePrice)
+train["BoughtOffPlan"] = train.SaleCondition.replace({"Abnorml": 0, "Alloca": 0, "AdjLand": 0,
+                                                      "Family": 0, "Normal": 0, "Partial": 1})
+# corr = train.corr()
+# corr.sort_values(["SalePrice"], ascending = False, inplace = True)
+# print(corr.SalePrice)
 
 # Create new features
 # 3* Polynomials on the top 10 existing features
@@ -287,8 +290,8 @@ train["GarageScore-3"] = train["GarageScore"] ** 3
 train["GarageScore-Sq"] = np.sqrt(train["GarageScore"])
 
 # Differentiate numerical features (minus the target) and categorical features
-categorical_features = train.select_dtypes(include = ["object"]).columns
-numerical_features = train.select_dtypes(exclude = ["object"]).columns
+categorical_features = train.select_dtypes(include=["object"]).columns
+numerical_features = train.select_dtypes(exclude=["object"]).columns
 numerical_features = numerical_features.drop("SalePrice")
 print("Numerical features : " + str(len(numerical_features)))
 print("Categorical features : " + str(len(categorical_features)))
@@ -313,43 +316,43 @@ train_cat = pd.get_dummies(train_cat)
 print("Remaining NAs for categorical features in train : " + str(train_cat.isnull().values.sum()))
 
 # Join categorical and numerical features
-train = pd.concat([train_num, train_cat], axis = 1)
+train = pd.concat([train_num, train_cat], axis=1)
 print("New number of features : " + str(train.shape[1]))
 
 # Partition the dataset in train + validation sets
-X_train, X_test, y_train, y_test = train_test_split(train, y, test_size = 0.3, random_state = 0)
+
+# print("y_test : " + str(y_test.shape))
+# standardize numeric attributes
+stdSc = StandardScaler()
+train.loc[:, numerical_features] = stdSc.fit_transform(train.loc[:, numerical_features])
+# X_test.loc[:, numerical_features] = stdSc.transform(X_test.loc[:, numerical_features])
+# split from combined data
+train_split = train[:(train.shape[0] - test.shape[0])]
+print("Find most important features relative to target")
+corr = pd.concat([train_split,y],axis=1).corr()
+corr.sort_values(["SalePrice"], ascending = False, inplace = True)
+print(corr['SalePrice'])
+test = train[(0 - test.shape[0]):]
+X_train, X_test, y_train, y_test = train_test_split(train_split, y, test_size=0.3, random_state=0)
+
 print("X_train : " + str(X_train.shape))
 print("X_test : " + str(X_test.shape))
 print("y_train : " + str(y_train.shape))
-print("y_test : " + str(y_test.shape))
 
-stdSc = StandardScaler()
-X_train.loc[:, numerical_features] = stdSc.fit_transform(X_train.loc[:, numerical_features])
-X_test.loc[:, numerical_features] = stdSc.transform(X_test.loc[:, numerical_features])
+scorer = make_scorer(mean_squared_error, greater_is_better=False)
 
-scorer = make_scorer(mean_squared_error, greater_is_better = False)
-def rmse_cv_train(model):
-    rmse= np.sqrt(-cross_val_score(model, X_train, y_train, scoring = scorer, cv = 10))
-    return(rmse)
 
-def rmse_cv_test(model):
-    rmse= np.sqrt(-cross_val_score(model, X_test, y_test, scoring = scorer, cv = 10))
-    return(rmse)
+def rmse_cv(model, X, Y):
+    rmse = np.sqrt(-cross_val_score(model, X, Y, scoring=scorer, cv=10))
+    return (rmse)
 
 
 def linear_regression():
     lr = LinearRegression()
     lr.fit(X_train, y_train)
     # Look at predictions on training and validation set
-    print("RMSE on Training set :", rmse_cv_train(lr).mean())
-    print("RMSE on Test set :", rmse_cv_test(lr).mean())
-    y_train_pred = lr.predict(X_train)
-    y_test_pred = lr.predict(X_test)
-    lr = LinearRegression()
-    lr.fit(X_train, y_train)
-    # Look at predictions on training and validation set
-    print("RMSE on Training set :", rmse_cv_train(lr).mean())
-    print("RMSE on Test set :", rmse_cv_test(lr).mean())
+    print("RMSE on Training set :", rmse_cv(lr, X_train, y_train).mean())
+    print("RMSE on Test set :", rmse_cv(lr, X_test, y_test).mean())
     y_train_pred = lr.predict(X_train)
     y_test_pred = lr.predict(X_test)
     plt.scatter(y_train_pred, y_train_pred - y_train, c="blue", marker="s", label="Training data")
@@ -384,8 +387,8 @@ def ridge_regression():
     ridge.fit(X_train, y_train)
     alpha = ridge.alpha_
     print("Best alpha :", alpha)
-    print("Ridge RMSE on Training set :", rmse_cv_train(ridge).mean())
-    print("Ridge RMSE on Test set :", rmse_cv_test(ridge).mean())
+    print("Ridge RMSE on Training set :", rmse_cv(ridge, X_train, y_train).mean())
+    print("Ridge RMSE on Test set :", rmse_cv(ridge, X_test, y_test).mean())
     y_train_rdg = ridge.predict(X_train)
     y_test_rdg = ridge.predict(X_test)
     # Plot residuals
@@ -416,8 +419,7 @@ def ridge_regression():
     plt.title("Coefficients in the Ridge Model")
     plt.show()
 
-
-
+    return ridge
 
 
 def Lasso_regression():
@@ -436,8 +438,8 @@ def Lasso_regression():
     lasso.fit(X_train, y_train)
     alpha = lasso.alpha_
     print("Best alpha :", alpha)
-    print("Lasso RMSE on Training set :", rmse_cv_train(lasso).mean())
-    print("Lasso RMSE on Test set :", rmse_cv_test(lasso).mean())
+    print("Lasso RMSE on Training set :", rmse_cv(lasso, X_train, y_train).mean())
+    print("Lasso RMSE on Test set :", rmse_cv(lasso, X_test, y_test).mean())
     y_train_las = lasso.predict(X_train)
     y_test_las = lasso.predict(X_test)
     # Plot residuals
@@ -467,6 +469,7 @@ def Lasso_regression():
     imp_coefs.plot(kind="barh")
     plt.title("Coefficients in the Lasso Model")
     plt.show()
+    return lasso
 
 
 def Elasticnet_regression():
@@ -474,8 +477,8 @@ def Elasticnet_regression():
                               alphas=[0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006,
                                       0.01, 0.03, 0.06, 0.1, 0.3, 0.6, 1, 3, 6],
                               max_iter=50000, cv=10)
-    print('handled data columns :\n', X_train.columns)
-    elasticNet.fit(X_train, y_train)
+    print('handled data columns :\n', train_split.columns)
+    elasticNet.fit(train_split, y)
     alpha = elasticNet.alpha_
     ratio = elasticNet.l1_ratio_
     print("Best l1_ratio :", ratio)
@@ -485,7 +488,7 @@ def Elasticnet_regression():
         l1_ratio=[ratio * .85, ratio * .9, ratio * .95, ratio, ratio * 1.05, ratio * 1.1, ratio * 1.15],
         alphas=[0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.1, 0.3, 0.6, 1, 3, 6],
         max_iter=50000, cv=10)
-    elasticNet.fit(X_train, y_train)
+    elasticNet.fit(train_split, y)
     if (elasticNet.l1_ratio_ > 1):
         elasticNet.l1_ratio_ = 1
     alpha = elasticNet.alpha_
@@ -501,20 +504,21 @@ def Elasticnet_regression():
                                       alpha * 1.3,
                                       alpha * 1.35, alpha * 1.4],
                               max_iter=50000, cv=10)
-    elasticNet.fit(X_train, y_train)
+    elasticNet.fit(train_split, y)
     if (elasticNet.l1_ratio_ > 1):
         elasticNet.l1_ratio_ = 1
     alpha = elasticNet.alpha_
     ratio = elasticNet.l1_ratio_
     print("Best l1_ratio :", ratio)
     print("Best alpha :", alpha)
-    print("ElasticNet RMSE on Training set :", rmse_cv_train(elasticNet).mean())
-    print("ElasticNet RMSE on Test set :", rmse_cv_test(elasticNet).mean())
-    y_train_ela = elasticNet.predict(X_train)
-    y_test_ela = elasticNet.predict(X_test)
+    print("ElasticNet RMSE on Training set :", rmse_cv(elasticNet, train_split, y).mean())
+
+    y_train_ela = elasticNet.predict(train_split)
+
+
     # Plot residuals
-    plt.scatter(y_train_ela, y_train_ela - y_train, c="blue", marker="s", label="Training data")
-    plt.scatter(y_test_ela, y_test_ela - y_test, c="lightgreen", marker="s", label="Validation data")
+    plt.scatter(y_train_ela, y_train_ela - y, c="blue", marker="s", label="Training data")
+
     plt.title("Linear regression with ElasticNet regularization")
     plt.xlabel("Predicted values")
     plt.ylabel("Residuals")
@@ -522,8 +526,8 @@ def Elasticnet_regression():
     plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
     plt.show()
     # Plot predictions
-    plt.scatter(y_train, y_train_ela, c="blue", marker="s", label="Training data")
-    plt.scatter(y_test, y_test_ela, c="lightgreen", marker="s", label="Validation data")
+    plt.scatter(y, y_train_ela, c="blue", marker="s", label="Training data")
+
     plt.title("Linear regression with ElasticNet regularization")
     plt.xlabel("Predicted values")
     plt.ylabel("Real values")
@@ -531,7 +535,7 @@ def Elasticnet_regression():
     plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
     plt.show()
     # Plot important coefficients
-    coefs = pd.Series(elasticNet.coef_, index=X_train.columns)
+    coefs = pd.Series(elasticNet.coef_, index=train_split.columns)
     print("ElasticNet picked " + str(sum(coefs != 0)) + " features and eliminated the other " + str(
         sum(coefs == 0)) + " features")
     imp_coefs = pd.concat([coefs.sort_values().head(10),
@@ -540,11 +544,19 @@ def Elasticnet_regression():
     plt.title("Coefficients in the ElasticNet Model")
     plt.show()
 
-
-#linear_regression()
-#ridge_regression()
-#Lasso_regression()
-Elasticnet_regression()
+    return elasticNet
 
 
+# linear_regression()
+# ridge_regression()
+# Lasso_regression()
+model = Elasticnet_regression()
+'''
+        predict final result
+ '''
 
+pre_result = model.predict(test)
+df = pd.DataFrame(np.round((np.exp(pre_result) - 1),2), index=list(range(1461, 2920)), columns=['SalePrice'])
+
+print('length of pred result:', df.shape, '\n', df)
+df.to_csv('../../submission1219.csv')
