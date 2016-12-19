@@ -8,6 +8,13 @@ from sklearn.metrics import mean_squared_error, make_scorer
 from scipy.stats import skew
 import matplotlib.pyplot as plt
 
+import math
+#A function to calculate Root Mean Squared Logarithmic Error (RMSLE)
+def rmsle(y, y_pred):
+	assert len(y) == len(y_pred)
+	terms_to_sum = [(math.log(y_pred[i] + 1) - math.log(y[i] + 1)) ** 2.0 for i,pred in enumerate(y_pred)]
+	return (sum(terms_to_sum) * (1.0/len(y))) ** 0.5
+
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 train = pd.read_csv('../../train.csv')
 test = pd.read_csv('../../test.csv')
@@ -351,12 +358,10 @@ def linear_regression():
     lr = LinearRegression()
     lr.fit(X_train, y_train)
     # Look at predictions on training and validation set
-    print("RMSE on Training set :", rmse_cv(lr, X_train, y_train).mean())
-    print("RMSE on Test set :", rmse_cv(lr, X_test, y_test).mean())
-    y_train_pred = lr.predict(X_train)
-    y_test_pred = lr.predict(X_test)
-    plt.scatter(y_train_pred, y_train_pred - y_train, c="blue", marker="s", label="Training data")
-    plt.scatter(y_test_pred, y_test_pred - y_test, c="lightgreen", marker="s", label="Validation data")
+    print("RMSE on Training set :", rmse_cv(lr, train_split, y).mean())
+    y_train_pred = lr.predict(train_split)
+    print('rmsle calculate by self:', rmsle(list(np.exp(y) - 1), list(np.exp(y_train_pred) - 1)))
+    plt.scatter(y_train_pred, y_train_pred - y, c="blue", marker="s", label="Training data")
     plt.title("Linear regression")
     plt.xlabel("Predicted values")
     plt.ylabel("Residuals")
@@ -364,14 +369,14 @@ def linear_regression():
     plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
     plt.show()
     # Plot predictions
-    plt.scatter(y_train_pred, y_train, c="blue", marker="s", label="Training data")
-    plt.scatter(y_test_pred, y_test, c="lightgreen", marker="s", label="Validation data")
+    plt.scatter(y_train_pred, y, c="blue", marker="s", label="Training data")
     plt.title("Linear regression")
     plt.xlabel("Predicted values")
     plt.ylabel("Real values")
     plt.legend(loc="upper left")
     plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
     plt.show()
+    return lr
 
 
 def ridge_regression():
@@ -514,7 +519,7 @@ def Elasticnet_regression():
     print("ElasticNet RMSE on Training set :", rmse_cv(elasticNet, train_split, y).mean())
 
     y_train_ela = elasticNet.predict(train_split)
-
+    print('rmsle calculate by self:',rmsle(list(np.exp(y)-1),list(np.exp(y_train_ela)-1)))
 
     # Plot residuals
     plt.scatter(y_train_ela, y_train_ela - y, c="blue", marker="s", label="Training data")
@@ -556,7 +561,9 @@ model = Elasticnet_regression()
  '''
 
 pre_result = model.predict(test)
-df = pd.DataFrame(np.round((np.exp(pre_result) - 1),2), index=list(range(1461, 2920)), columns=['SalePrice'])
+pre_result = np.exp(pre_result) - 1
+
+df = pd.DataFrame(np.round(pre_result,2), index=list(range(1461, 1461 + pre_result.shape[0])), columns=['SalePrice'])
 
 print('length of pred result:', df.shape, '\n', df)
-df.to_csv('../../submission1219.csv')
+# df.to_csv('../../submission1219.csv')
