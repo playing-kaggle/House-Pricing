@@ -5,11 +5,8 @@ import pandas as pd
 import numpy as np
 import math
 # from dataImport import read_train, na_cols
-from dataCharts import ChartPlayer
 from collections import Counter
-
 from scipy.stats import skew
-from scipy.stats.stats import pearsonr
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -20,7 +17,6 @@ test_file = u'../../test.csv'
 train_df = pd.read_csv(train_file, index_col=False)
 test_df = pd.read_csv(test_file, index_col=False)
 
-chart = ChartPlayer()
 #%%
 
 train_df.drop(['Street', 'Utilities', 'Condition2', 'RoofMatl', 'Alley',
@@ -103,8 +99,8 @@ def pre_process(df):
 
     
     bool_cols = np.array([df[col_name].isnull() for col_name in df.columns])
-    print 'rows containing na:',np.sum(bool_cols.any(axis=0))
-    print 'rows all na:',np.sum(bool_cols.all(axis=0))
+    print('rows containing na:',np.sum(bool_cols.any(axis=0)))
+    print('rows all na:',np.sum(bool_cols.all(axis=0)))
     
     
     # log1pskewed_feats
@@ -113,8 +109,8 @@ def pre_process(df):
     skewed_feats = df[numeric_feats].apply(lambda x: skew(x.dropna())) #compute skewness
     skewed_feats = skewed_feats[skewed_feats > 0.75]
     skewed_feats = skewed_feats.index
-    
-    df[skewed_feats] = np.log1p(df[skewed_feats])     
+    df[skewed_feats] = np.log1p(df[skewed_feats])
+
     
     return df
 
@@ -161,9 +157,7 @@ def coef_analysis(model_name,model, X):
     imp_coef = pd.concat([coef.sort_values().head(10),
                           coef.sort_values().tail(10)])
 
-    matplotlib.rcParams['figure.figsize'] = (8.0, 10.0)
-    imp_coef.plot(kind = "barh")
-    plt.title("Coefficients in the Model")
+
     
     
 #%%
@@ -172,9 +166,8 @@ def ridge_train(X,y):
     cv_ridge = [rmse_cv(Ridge(alpha = alpha),X,y).mean() for alpha in alphas]
     cv_ridge = pd.Series(cv_ridge, index = alphas)
     cv_ridge.plot(title = "Validation - Just Do It")
-    plt.xlabel("alpha")
-    plt.ylabel("rmse")
-    print 'min cv is : ',cv_ridge.min()
+
+    print ('min cv is : ',cv_ridge.min())
     
     return alphas[cv_ridge.values.argmin()]
 
@@ -186,14 +179,14 @@ ridge_model = Ridge(alpha = ridge_alpha)
 #%%
 def lasso_train(X, y):
     model_lasso = LassoCV(alphas = [1, 0.1, 0.001, 0.0005]).fit(X, y)
-    print 'lasso mean cv is ',rmse_cv(model_lasso,X,y).mean()
+    print ('lasso mean cv is ',rmse_cv(model_lasso,X,y).mean())
     
     return model_lasso
     
 #%%
 lasso_model = lasso_train(X_train,y_train)
 
-coef_analysis('Lasso',lasso_model, X_train)
+coef_analysis('Lasso', lasso_model, X_train)
 
 rmsle(np.exp(lasso_model.predict(X_train)),np.exp(y_train.values))
 
@@ -212,4 +205,10 @@ preds = lasso_model_pruned.predict(X_test.loc[:,lasso_useful_cols])
 #%%
 prices = pd.Series(np.exp(preds)-1,index=(X_test.index.values+1))
 #%%
-prices.to_csv('~/Download/pred_prices.csv')
+print('GrLivArea:\n',X_test['GrLivArea'].values,'pred:\n',np.exp(preds)-1)
+plt.scatter(list(X_test['GrLivArea'].values), list((np.exp(preds)-1)))
+plt.title("Looking for outliers")
+plt.xlabel("GrLivArea")
+plt.ylabel("SalePrice")
+plt.show()
+prices.to_csv('../../pred_prices.csv')

@@ -2,8 +2,9 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.feature_selection import SelectFromModel
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression, RidgeCV, LassoCV, ElasticNetCV
+from sklearn.linear_model import LinearRegression, RidgeCV, LassoCV, ElasticNetCV,BayesianRidge
 from sklearn.metrics import mean_squared_error, make_scorer
 from scipy.stats import skew
 import matplotlib.pyplot as plt
@@ -332,23 +333,16 @@ print("New number of features : " + str(train.shape[1]))
 # standardize numeric attributes
 stdSc = StandardScaler()
 train.loc[:, numerical_features] = stdSc.fit_transform(train.loc[:, numerical_features])
-# X_test.loc[:, numerical_features] = stdSc.transform(X_test.loc[:, numerical_features])
 # split from combined data
 train_split = train[:(train.shape[0] - test.shape[0])]
 print("Find most important features relative to target")
 corr = pd.concat([train_split,y],axis=1).corr()
-corr.sort_values(["SalePrice"], ascending = False, inplace = True)
-print(corr['SalePrice'])
+
 test = train[(0 - test.shape[0]):]
 X_train, X_test, y_train, y_test = train_test_split(train_split, y, test_size=0.3, random_state=0)
 
-print("X_train : " + str(X_train.shape))
-print("X_test : " + str(X_test.shape))
-print("y_train : " + str(y_train.shape))
 
 scorer = make_scorer(mean_squared_error, greater_is_better=False)
-
-
 def rmse_cv(model, X, Y):
     rmse = np.sqrt(-cross_val_score(model, X, Y, scoring=scorer, cv=10))
     return (rmse)
@@ -431,7 +425,7 @@ def Lasso_regression():
     lasso = LassoCV(alphas=[0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.1,
                             0.3, 0.6, 1],
                     max_iter=50000, cv=10)
-    lasso.fit(X_train, y_train)
+    lasso.fit(train_split, y)
     alpha = lasso.alpha_
     print("Best alpha :", alpha)
     print("Try again for more precision with alphas centered around " + str(alpha))
@@ -440,16 +434,14 @@ def Lasso_regression():
                             alpha * 1.1, alpha * 1.15, alpha * 1.25, alpha * 1.3, alpha * 1.35,
                             alpha * 1.4],
                     max_iter=50000, cv=10)
-    lasso.fit(X_train, y_train)
+    lasso.fit(train_split, y)
     alpha = lasso.alpha_
     print("Best alpha :", alpha)
-    print("Lasso RMSE on Training set :", rmse_cv(lasso, X_train, y_train).mean())
-    print("Lasso RMSE on Test set :", rmse_cv(lasso, X_test, y_test).mean())
-    y_train_las = lasso.predict(X_train)
-    y_test_las = lasso.predict(X_test)
+    print("Lasso RMSE on Training set :", rmse_cv(lasso, train_split, y).mean())
+
+    y_train_las = lasso.predict(train_split)
     # Plot residuals
-    plt.scatter(y_train_las, y_train_las - y_train, c="blue", marker="s", label="Training data")
-    plt.scatter(y_test_las, y_test_las - y_test, c="lightgreen", marker="s", label="Validation data")
+    plt.scatter(y_train_las, y_train_las - y, c="blue", marker="s", label="Training data")
     plt.title("Linear regression with Lasso regularization")
     plt.xlabel("Predicted values")
     plt.ylabel("Residuals")
@@ -457,33 +449,33 @@ def Lasso_regression():
     plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
     plt.show()
     # Plot predictions
-    plt.scatter(y_train_las, y_train, c="blue", marker="s", label="Training data")
-    plt.scatter(y_test_las, y_test, c="lightgreen", marker="s", label="Validation data")
+    plt.scatter(y_train_las, y, c="blue", marker="s", label="Training data")
     plt.title("Linear regression with Lasso regularization")
     plt.xlabel("Predicted values")
     plt.ylabel("Real values")
     plt.legend(loc="upper left")
     plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
     plt.show()
-    # Plot important coefficients
-    coefs = pd.Series(lasso.coef_, index=X_train.columns)
-    print("Lasso picked " + str(sum(coefs != 0)) + " features and eliminated the other " + \
-          str(sum(coefs == 0)) + " features")
-    imp_coefs = pd.concat([coefs.sort_values().head(10),
-                           coefs.sort_values().tail(10)])
-    imp_coefs.plot(kind="barh")
-    plt.title("Coefficients in the Lasso Model")
-    plt.show()
-    return lasso
+    # # Plot important coefficients
+    coefs = pd.DataFrame(lasso.coef_, index=X_train.columns,columns=['value'])
+    # print("Lasso picked " + str(sum(coefs != 0)) + " features and eliminated the other " + \
+    #       str(sum(coefs == 0)) + " features")
+    # imp_coefs = pd.concat([coefs.sort_values().head(10),
+    #                        coefs.sort_values().tail(10)])
+    # imp_coefs.plot(kind="barh")
+    # plt.title("Coefficients in the Lasso Model")
+    # plt.show()
+
+    return coefs,lasso
 
 
-def Elasticnet_regression():
+def Elasticnet_regression(X=train_split,Y=y):
     elasticNet = ElasticNetCV(l1_ratio=[0.1, 0.3, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1],
                               alphas=[0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006,
                                       0.01, 0.03, 0.06, 0.1, 0.3, 0.6, 1, 3, 6],
                               max_iter=50000, cv=10)
     print('handled data columns :\n', train_split.columns)
-    elasticNet.fit(train_split, y)
+    elasticNet.fit(X, Y)
     alpha = elasticNet.alpha_
     ratio = elasticNet.l1_ratio_
     print("Best l1_ratio :", ratio)
@@ -493,7 +485,7 @@ def Elasticnet_regression():
         l1_ratio=[ratio * .85, ratio * .9, ratio * .95, ratio, ratio * 1.05, ratio * 1.1, ratio * 1.15],
         alphas=[0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.1, 0.3, 0.6, 1, 3, 6],
         max_iter=50000, cv=10)
-    elasticNet.fit(train_split, y)
+    elasticNet.fit(X, Y)
     if (elasticNet.l1_ratio_ > 1):
         elasticNet.l1_ratio_ = 1
     alpha = elasticNet.alpha_
@@ -509,20 +501,21 @@ def Elasticnet_regression():
                                       alpha * 1.3,
                                       alpha * 1.35, alpha * 1.4],
                               max_iter=50000, cv=10)
-    elasticNet.fit(train_split, y)
+    elasticNet.fit(X, Y)
     if (elasticNet.l1_ratio_ > 1):
         elasticNet.l1_ratio_ = 1
     alpha = elasticNet.alpha_
     ratio = elasticNet.l1_ratio_
     print("Best l1_ratio :", ratio)
     print("Best alpha :", alpha)
-    print("ElasticNet RMSE on Training set :", rmse_cv(elasticNet, train_split, y).mean())
+    print("ElasticNet RMSE on Training set :", rmse_cv(elasticNet, X, Y).mean())
 
-    y_train_ela = elasticNet.predict(train_split)
-    print('rmsle calculate by self:',rmsle(list(np.exp(y)-1),list(np.exp(y_train_ela)-1)))
+    y_train_ela = elasticNet.predict(X)
+    print('rmsle calculate by self:',rmsle(list(np.exp(Y)-1),list(np.exp(y_train_ela)-1)))
 
     # Plot residuals
-    plt.scatter(y_train_ela, y_train_ela - y, c="blue", marker="s", label="Training data")
+
+    plt.scatter(y_train_ela, y_train_ela - Y, c="blue", marker="s", label="Training data")
 
     plt.title("Linear regression with ElasticNet regularization")
     plt.xlabel("Predicted values")
@@ -531,7 +524,7 @@ def Elasticnet_regression():
     plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
     plt.show()
     # Plot predictions
-    plt.scatter(y, y_train_ela, c="blue", marker="s", label="Training data")
+    plt.scatter(Y, y_train_ela, c="blue", marker="s", label="Training data")
 
     plt.title("Linear regression with ElasticNet regularization")
     plt.xlabel("Predicted values")
@@ -539,31 +532,72 @@ def Elasticnet_regression():
     plt.legend(loc="upper left")
     plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
     plt.show()
-    # Plot important coefficients
-    coefs = pd.Series(elasticNet.coef_, index=train_split.columns)
-    print("ElasticNet picked " + str(sum(coefs != 0)) + " features and eliminated the other " + str(
-        sum(coefs == 0)) + " features")
-    imp_coefs = pd.concat([coefs.sort_values().head(10),
-                           coefs.sort_values().tail(10)])
-    imp_coefs.plot(kind="barh")
-    plt.title("Coefficients in the ElasticNet Model")
-    plt.show()
+    # # Plot important coefficients
+    # coefs = pd.Series(elasticNet.coef_, index=train_split.columns)
+    # print("ElasticNet picked " + str(sum(coefs != 0)) + " features and eliminated the other " + str(
+    #     sum(coefs == 0)) + " features")
+    # imp_coefs = pd.concat([coefs.sort_values().head(10),
+    #                        coefs.sort_values().tail(10)])
+    # imp_coefs.plot(kind="barh")
+    # plt.title("Coefficients in the ElasticNet Model")
+    # plt.show()
+
 
     return elasticNet
+
+def Bayesian_Regression():
+    clf = BayesianRidge(n_iter=500,compute_score=True)
+    clf.fit(train_split,y)
+    print('bayesian coef:',clf.coef_)
+    print('bayesian alpha:',clf.alpha_)
+    print('bayesian lambda:',clf.lambda_)
+
+    y_train = clf.predict(train_split)
+    print("bayesian RMSE on Training set :", rmse_cv(clf, train_split, y).mean())
+    print('rmsle calculate by self:', rmsle(list(np.exp(y) - 1), list(np.exp(y_train) - 1)))
+
+    plt.scatter(y_train, y_train - y, c="blue", marker="s", label="Training data")
+
+    plt.title("Linear regression with bayesian ridge")
+    plt.xlabel("Predicted values")
+    plt.ylabel("Residuals")
+    plt.legend(loc="upper left")
+    plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
+    plt.show()
+    # Plot predictions
+    plt.scatter(y, y_train, c="blue", marker="s", label="Training data")
+
+    plt.title("Linear regression with bayesian ridge")
+    plt.xlabel("Predicted values")
+    plt.ylabel("Real values")
+    plt.legend(loc="upper left")
+    plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
+    plt.show()
+
+    return clf
 
 
 # linear_regression()
 # ridge_regression()
 # Lasso_regression()
-model = Elasticnet_regression()
-'''
-        predict final result
- '''
+#model = Elasticnet_regression()
+# '''
+#         predict final result
+#  '''
+#
+#
+coefs,lasso = Lasso_regression()
+selected_features = coefs[coefs['value'] >= 0].index.values
+train_new = train_split[selected_features]
 
-pre_result = model.predict(test)
-pre_result = np.exp(pre_result) - 1
+model = Elasticnet_regression(train_new,y)
+# pre_result = model.predict(test)
+# pre_result = np.exp(pre_result) - 1
+#
+# df = pd.DataFrame(np.round(pre_result,2), index=list(range(1461, 1461 + pre_result.shape[0])), columns=['SalePrice'])
+#
+# print('length of pred result:', df.shape, '\n', df)
+# df.to_csv('../../submission1219.csv',index_label='Id')
 
-df = pd.DataFrame(np.round(pre_result,2), index=list(range(1461, 1461 + pre_result.shape[0])), columns=['SalePrice'])
 
-print('length of pred result:', df.shape, '\n', df)
-# df.to_csv('../../submission1219.csv')
+
