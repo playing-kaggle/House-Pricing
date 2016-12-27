@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 import math
 #A function to calculate Root Mean Squared Logarithmic Error (RMSLE)
 def rmsle(y, y_pred):
-	assert len(y) == len(y_pred)
-	terms_to_sum = [(math.log(y_pred[i] + 1) - math.log(y[i] + 1)) ** 2.0 for i,pred in enumerate(y_pred)]
-	return (sum(terms_to_sum) * (1.0/len(y))) ** 0.5
+	return  np.sqrt(mean_squared_error(y,y_pred))
+
+
 
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 train = pd.read_csv('../../train.csv')
@@ -260,9 +260,8 @@ train["HasMasVnr"] = train.MasVnrType.replace({"BrkCmn": 1, "BrkFace": 1, "CBloc
 # House completed before sale or not
 train["BoughtOffPlan"] = train.SaleCondition.replace({"Abnorml": 0, "Alloca": 0, "AdjLand": 0,
                                                       "Family": 0, "Normal": 0, "Partial": 1})
-# corr = train.corr()
-# corr.sort_values(["SalePrice"], ascending = False, inplace = True)
-# print(corr.SalePrice)
+
+
 
 # Create new features
 # 3* Polynomials on the top 10 existing features
@@ -325,7 +324,6 @@ print("Remaining NAs for categorical features in train : " + str(train_cat.isnul
 
 # Join categorical and numerical features
 train = pd.concat([train_num, train_cat], axis=1)
-print("New number of features : " + str(train.shape[1]))
 
 # Partition the dataset in train + validation sets
 
@@ -337,7 +335,12 @@ train.loc[:, numerical_features] = stdSc.fit_transform(train.loc[:, numerical_fe
 train_split = train[:(train.shape[0] - test.shape[0])]
 print("Find most important features relative to target")
 corr = pd.concat([train_split,y],axis=1).corr()
-
+drop_columns = list(corr['SalePrice'].loc[corr['SalePrice'] < 0,].index)
+print('old number of features:',str(train.shape[1]))
+print('drop columns:',drop_columns)
+train.drop(drop_columns,axis=1, inplace=True)
+print("New number of features : " + str(train.shape[1]))
+train_split = train[:(train.shape[0] - test.shape[0])]
 test = train[(0 - test.shape[0]):]
 X_train, X_test, y_train, y_test = train_test_split(train_split, y, test_size=0.3, random_state=0)
 
@@ -532,49 +535,35 @@ def Elasticnet_regression(X=train_split,Y=y):
     plt.legend(loc="upper left")
     plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
     plt.show()
-    # # Plot important coefficients
-    # coefs = pd.Series(elasticNet.coef_, index=train_split.columns)
-    # print("ElasticNet picked " + str(sum(coefs != 0)) + " features and eliminated the other " + str(
-    #     sum(coefs == 0)) + " features")
-    # imp_coefs = pd.concat([coefs.sort_values().head(10),
-    #                        coefs.sort_values().tail(10)])
-    # imp_coefs.plot(kind="barh")
-    # plt.title("Coefficients in the ElasticNet Model")
-    # plt.show()
-
-
     return elasticNet
 
-def Bayesian_Regression():
-    clf = BayesianRidge(n_iter=500,compute_score=True)
-    clf.fit(train_split,y)
-    print('bayesian coef:',clf.coef_)
-    print('bayesian alpha:',clf.alpha_)
-    print('bayesian lambda:',clf.lambda_)
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+def GDBT_regression(X=train_split,Y=y):
+    est = GradientBoostingRegressor(n_estimators=75,max_depth=3,learning_rate=0.1)
+    X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.3,random_state=0)
+    est.fit(X_train,Y_train)
+    y_train_pred = est.predict(X_test)
+    plt.scatter(y_train_pred,y_train_pred - Y_test,c = 'blue',marker='s', label='error on training data')
 
-    y_train = clf.predict(train_split)
-    print("bayesian RMSE on Training set :", rmse_cv(clf, train_split, y).mean())
-    print('rmsle calculate by self:', rmsle(list(np.exp(y) - 1), list(np.exp(y_train) - 1)))
-
-    plt.scatter(y_train, y_train - y, c="blue", marker="s", label="Training data")
-
-    plt.title("Linear regression with bayesian ridge")
+    plt.title("Linear regression with  GDBT")
     plt.xlabel("Predicted values")
     plt.ylabel("Residuals")
     plt.legend(loc="upper left")
     plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
     plt.show()
     # Plot predictions
-    plt.scatter(y, y_train, c="blue", marker="s", label="Training data")
+    plt.scatter(Y_test, y_train_pred, c="blue", marker="s", label="Training data")
 
-    plt.title("Linear regression with bayesian ridge")
+    plt.title("Linear regression with  GDBT")
     plt.xlabel("Predicted values")
     plt.ylabel("Real values")
     plt.legend(loc="upper left")
     plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
     plt.show()
+    print('rmse value:',rmsle(Y_test,y_train_pred))
 
-    return clf
+    return est
 
 
 # linear_regression()
@@ -586,11 +575,11 @@ def Bayesian_Regression():
 #  '''
 #
 #
-coefs,lasso = Lasso_regression()
-selected_features = coefs[coefs['value'] >= 0].index.values
-train_new = train_split[selected_features]
+# coefs,lasso = Lasso_regression()
+# selected_features = coefs[coefs['value'] != 0].index.values
+# train_new = train_split[selected_features]
 
-model = Elasticnet_regression(train_new,y)
+model = GDBT_regression()
 # pre_result = model.predict(test)
 # pre_result = np.exp(pre_result) - 1
 #
